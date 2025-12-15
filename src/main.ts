@@ -18,7 +18,7 @@ const sketch = (p: p5) => {
   const drawFloorCell = (
     xIndex: number,
     yIndex: number,
-    colorValue: p5.Color | string | number | number[]
+    colorValue: p5.Color
   ) => {
     const cellCenterX = -gridRadius + gridSpacing / 2 + xIndex * gridSpacing;
     const cellCenterY = -gridRadius + gridSpacing / 2 + yIndex * gridSpacing;
