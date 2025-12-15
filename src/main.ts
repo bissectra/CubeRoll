@@ -1,6 +1,6 @@
 import "./style.css";
 import p5 from "p5";
-import { drawCube, ORIENTATION_QUATERNIONS } from "./cube-factory";
+import { drawCube, drawFloor, FaceColorName, ORIENTATION_QUATERNIONS } from "./cube-factory";
 
 const sketch = (p: p5) => {
   const gridCells = 11;
@@ -16,41 +16,30 @@ const sketch = (p: p5) => {
     p.setAttributes("antialias", true);
   };
 
+  const floorColorRows: FaceColorName[][] = [
+    ["red", "red", "red", "red"],
+    ["orange", "orange", "orange", "orange"],
+    ["green", "green", "green", "green"],
+    ["blue", "blue", "blue", "blue"],
+    ["white", "white", "white", "white"],
+    ["yellow", "yellow", "yellow", "yellow"],
+  ];
+
   p.draw = () => {
     p.background(16);
     p.lights();
     p.push();
     p.orbitControl();
 
-    drawCube(p, 0, 0, ORIENTATION_QUATERNIONS["red:green"], gridSpacing, gridRadius);
-    drawCube(p, 2, 0, ORIENTATION_QUATERNIONS["red:blue"], gridSpacing, gridRadius);
-    drawCube(p, 4, 0, ORIENTATION_QUATERNIONS["red:white"], gridSpacing, gridRadius);
-    drawCube(p, 6, 0, ORIENTATION_QUATERNIONS["red:yellow"], gridSpacing, gridRadius);
+    drawCube(p, 3, 3, ORIENTATION_QUATERNIONS["white:red"], gridSpacing, gridRadius);
 
-    drawCube(p, 0, 2, ORIENTATION_QUATERNIONS["orange:green"], gridSpacing, gridRadius);
-    drawCube(p, 2, 2, ORIENTATION_QUATERNIONS["orange:blue"], gridSpacing, gridRadius);
-    drawCube(p, 4, 2, ORIENTATION_QUATERNIONS["orange:white"], gridSpacing, gridRadius);
-    drawCube(p, 6, 2, ORIENTATION_QUATERNIONS["orange:yellow"], gridSpacing, gridRadius);
-
-    drawCube(p, 0, 4, ORIENTATION_QUATERNIONS["green:red"], gridSpacing, gridRadius);
-    drawCube(p, 2, 4, ORIENTATION_QUATERNIONS["green:orange"], gridSpacing, gridRadius);
-    drawCube(p, 4, 4, ORIENTATION_QUATERNIONS["green:white"], gridSpacing, gridRadius);
-    drawCube(p, 6, 4, ORIENTATION_QUATERNIONS["green:yellow"], gridSpacing, gridRadius);
-
-    drawCube(p, 0, 6, ORIENTATION_QUATERNIONS["blue:red"], gridSpacing, gridRadius);
-    drawCube(p, 2, 6, ORIENTATION_QUATERNIONS["blue:orange"], gridSpacing, gridRadius);
-    drawCube(p, 4, 6, ORIENTATION_QUATERNIONS["blue:white"], gridSpacing, gridRadius);
-    drawCube(p, 6, 6, ORIENTATION_QUATERNIONS["blue:yellow"], gridSpacing, gridRadius);
-
-    drawCube(p, 0, 8, ORIENTATION_QUATERNIONS["white:red"], gridSpacing, gridRadius);
-    drawCube(p, 2, 8, ORIENTATION_QUATERNIONS["white:orange"], gridSpacing, gridRadius);
-    drawCube(p, 4, 8, ORIENTATION_QUATERNIONS["white:green"], gridSpacing, gridRadius);
-    drawCube(p, 6, 8, ORIENTATION_QUATERNIONS["white:blue"], gridSpacing, gridRadius);
-
-    drawCube(p, 0, 10, ORIENTATION_QUATERNIONS["yellow:red"], gridSpacing, gridRadius);
-    drawCube(p, 2, 10, ORIENTATION_QUATERNIONS["yellow:orange"], gridSpacing, gridRadius);
-    drawCube(p, 4, 10, ORIENTATION_QUATERNIONS["yellow:green"], gridSpacing, gridRadius);
-    drawCube(p, 6, 10, ORIENTATION_QUATERNIONS["yellow:blue"], gridSpacing, gridRadius);
+    floorColorRows.forEach((row, rowIndex) => {
+      row.forEach((color, colIndex) => {
+        const xIndex = colIndex * 2;
+        const yIndex = rowIndex * 2;
+        drawFloor(p, xIndex, yIndex, color, gridSpacing, gridRadius);
+      });
+    });
 
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
     drawAxes(p, axisLength);

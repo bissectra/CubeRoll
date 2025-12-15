@@ -3,7 +3,7 @@ import { Quaternion, quaternionRotateVector } from "./quaternions";
 
 export type FaceColorName = "red" | "orange" | "green" | "blue" | "white" | "yellow";
 
-type FaceOrientationKey =
+export type FaceOrientationKey =
   | "red:green"
   | "red:blue"
   | "red:white"
@@ -294,6 +294,37 @@ export function drawCube(
   };
 
   cubeFaceDefinitions.forEach(({ signs, color }) => drawFace(signs, color));
+}
+
+export function drawFloor(
+  p: p5,
+  xIndex: number,
+  yIndex: number,
+  colorName: FaceColorName,
+  gridSpacing: number,
+  gridRadius: number
+) {
+  const halfSpacing = gridSpacing / 2;
+  const cellCenterX = -gridRadius + halfSpacing + xIndex * gridSpacing;
+  const cellCenterY = -gridRadius + halfSpacing + yIndex * gridSpacing;
+  const floorZ = -0.1;
+
+  const corners: [number, number][] = [
+    [cellCenterX - halfSpacing, cellCenterY - halfSpacing],
+    [cellCenterX + halfSpacing, cellCenterY - halfSpacing],
+    [cellCenterX + halfSpacing, cellCenterY + halfSpacing],
+    [cellCenterX - halfSpacing, cellCenterY + halfSpacing],
+  ];
+
+  p.push();
+  p.noStroke();
+  p.fill(getFaceColor(p, colorName));
+  p.beginShape();
+  corners.forEach(([x, y]) => {
+    p.vertex(x, y, floorZ);
+  });
+  p.endShape(p.CLOSE);
+  p.pop();
 }
 
 export { ORIENTATION_QUATERNIONS };
