@@ -31,12 +31,18 @@ const sketch = (p: p5) => {
   };
 
   p.draw = () => {
+    const pallette = [
+      [p.color(255, 60, 60), p.color(255, 165, 0)],
+      [p.color(60, 220, 140), p.color(60, 140, 220)],
+      [p.color(240, 240, 250), p.color(255, 240, 60)],
+    ];
+    
     p.background(16);
     p.lights();
 
     p.push();
     p.orbitControl();
-    drawFloorCell(1, 3, p.color(200, 60, 60, 90));
+    drawFloorCell(1, 3, pallette[2][1]);
 
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
     drawAxes(p, axisLength);
