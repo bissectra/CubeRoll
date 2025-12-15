@@ -249,7 +249,7 @@ const cubeFaceDefinitions: {
 ];
 
 const sketch = (p: p5) => {
-  const gridCells = 5;
+  const gridCells = 11;
   const gridSpacing = 60;
   const gridHalfCount = gridCells / 2;
   const gridRadius = gridHalfCount * gridSpacing;
