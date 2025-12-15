@@ -51,23 +51,25 @@ const sketch = (p: p5) => {
       p.createVector(0, 0, 1),
     ];
     const directionSign = (value: number) => (value === 1 ? -1 : 1); // palette index 0 = +, 1 = - per axis
-    const axisZDir = axisDirections[zAxis].copy().mult(directionSign(zDir));
-    const axisXGuess = axisDirections[xAxis].copy().mult(directionSign(xDir));
+    const axisVector = (axis: number, dir: number) =>
+      axisDirections[axis].copy().mult(directionSign(dir));
+    const axisZDir = axisVector(zAxis, zDir);
+    const axisXGuess = axisVector(xAxis, xDir);
 
+    const fallbackAxes = [p.createVector(1, 0, 0), p.createVector(0, 1, 0)];
     let axisYDir = axisZDir.copy().cross(axisXGuess);
-    if (axisYDir.magSq() < 1e-6) {
-      axisYDir = axisZDir.copy().cross(p.createVector(1, 0, 0));
-    }
-    if (axisYDir.magSq() < 1e-6) {
-      axisYDir = axisZDir.copy().cross(p.createVector(0, 1, 0));
+    for (const fallback of fallbackAxes) {
+      if (axisYDir.magSq() >= 1e-6) break;
+      axisYDir = axisZDir.copy().cross(fallback);
     }
     axisYDir.normalize();
     const axisXDir = axisYDir.copy().cross(axisZDir).normalize();
+
     const scaledX = axisXDir.copy().mult(halfSize);
     const scaledY = axisYDir.copy().mult(halfSize);
     const scaledZ = axisZDir.copy().mult(halfSize);
 
-    const vertex = (sx: number, sy: number, sz: number) => ({
+    const vertex = ([sx, sy, sz]: [number, number, number]) => ({
       x: center.x + scaledX.x * sx + scaledY.x * sy + scaledZ.x * sz,
       y: center.y + scaledX.y * sx + scaledY.y * sy + scaledZ.y * sz,
       z: center.z + scaledX.z * sx + scaledY.z * sy + scaledZ.z * sz,
@@ -81,30 +83,64 @@ const sketch = (p: p5) => {
       p.endShape(p.CLOSE);
     };
 
-    drawFace(
-      [vertex(1, 1, 1), vertex(1, 1, -1), vertex(1, -1, -1), vertex(1, -1, 1)],
-      pallette[0][0]
-    );
-    drawFace(
-      [vertex(-1, 1, 1), vertex(-1, -1, 1), vertex(-1, -1, -1), vertex(-1, 1, -1)],
-      pallette[0][1]
-    );
-    drawFace(
-      [vertex(1, 1, 1), vertex(1, 1, -1), vertex(-1, 1, -1), vertex(-1, 1, 1)],
-      pallette[1][0]
-    );
-    drawFace(
-      [vertex(1, -1, 1), vertex(-1, -1, 1), vertex(-1, -1, -1), vertex(1, -1, -1)],
-      pallette[1][1]
-    );
-    drawFace(
-      [vertex(1, 1, 1), vertex(-1, 1, 1), vertex(-1, -1, 1), vertex(1, -1, 1)],
-      pallette[2][0]
-    );
-    drawFace(
-      [vertex(1, 1, -1), vertex(1, -1, -1), vertex(-1, -1, -1), vertex(-1, 1, -1)],
-      pallette[2][1]
-    );
+    const faceDefinitions = [
+      {
+        signs: [
+          [1, 1, 1],
+          [1, 1, -1],
+          [1, -1, -1],
+          [1, -1, 1],
+        ],
+        color: pallette[0][0],
+      },
+      {
+        signs: [
+          [-1, 1, 1],
+          [-1, -1, 1],
+          [-1, -1, -1],
+          [-1, 1, -1],
+        ],
+        color: pallette[0][1],
+      },
+      {
+        signs: [
+          [1, 1, 1],
+          [1, 1, -1],
+          [-1, 1, -1],
+          [-1, 1, 1],
+        ],
+        color: pallette[1][0],
+      },
+      {
+        signs: [
+          [1, -1, 1],
+          [-1, -1, 1],
+          [-1, -1, -1],
+          [1, -1, -1],
+        ],
+        color: pallette[1][1],
+      },
+      {
+        signs: [
+          [1, 1, 1],
+          [-1, 1, 1],
+          [-1, -1, 1],
+          [1, -1, 1],
+        ],
+        color: pallette[2][0],
+      },
+      {
+        signs: [
+          [1, 1, -1],
+          [1, -1, -1],
+          [-1, -1, -1],
+          [-1, 1, -1],
+        ],
+        color: pallette[2][1],
+      },
+    ];
+
+    faceDefinitions.forEach(({ signs, color }) => drawFace(signs.map(vertex), color));
   };
 
   p.draw = () => {
