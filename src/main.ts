@@ -33,8 +33,10 @@ const sketch = (p: p5) => {
   const drawCube = (
     xIndex: number,
     yIndex: number,
-    axisZ: p5.Vector,
-    axisX: p5.Vector,
+    zAxis: number,
+    zDir: number,
+    xAxis: number,
+    xDir: number,
     pallette: p5.Color[][]
   ) => {
     const cellCenterX = -gridRadius + gridSpacing / 2 + xIndex * gridSpacing;
@@ -43,23 +45,27 @@ const sketch = (p: p5) => {
     const halfSize = cubeSize / 2;
     const center = p.createVector(cellCenterX, cellCenterY, halfSize);
 
-    const zDir = axisZ.copy().normalize();
-    const projectedX = zDir.copy().mult(zDir.dot(axisX));
-    const rawX = axisX.copy().sub(projectedX);
+    const axisDirections = [
+      p.createVector(1, 0, 0),
+      p.createVector(0, 1, 0),
+      p.createVector(0, 0, 1),
+    ];
+    const directionSign = (value: number) => (value === 1 ? -1 : 1); // palette index 0 = +, 1 = - per axis
+    const axisZDir = axisDirections[zAxis].copy().mult(directionSign(zDir));
+    const axisXGuess = axisDirections[xAxis].copy().mult(directionSign(xDir));
 
-    let xDir: p5.Vector;
-    if (rawX.magSq() < 1e-6) {
-      const fallback =
-        Math.abs(zDir.x) < 0.9 ? p.createVector(1, 0, 0) : p.createVector(0, 1, 0);
-      xDir = zDir.copy().cross(fallback).normalize();
-    } else {
-      xDir = rawX.normalize();
+    let axisYDir = axisZDir.copy().cross(axisXGuess);
+    if (axisYDir.magSq() < 1e-6) {
+      axisYDir = axisZDir.copy().cross(p.createVector(1, 0, 0));
     }
-
-    const yDir = zDir.copy().cross(xDir).normalize();
-    const scaledX = xDir.copy().mult(halfSize);
-    const scaledY = yDir.copy().mult(halfSize);
-    const scaledZ = zDir.copy().mult(halfSize);
+    if (axisYDir.magSq() < 1e-6) {
+      axisYDir = axisZDir.copy().cross(p.createVector(0, 1, 0));
+    }
+    axisYDir.normalize();
+    const axisXDir = axisYDir.copy().cross(axisZDir).normalize();
+    const scaledX = axisXDir.copy().mult(halfSize);
+    const scaledY = axisYDir.copy().mult(halfSize);
+    const scaledZ = axisZDir.copy().mult(halfSize);
 
     const vertex = (sx: number, sy: number, sz: number) => ({
       x: center.x + scaledX.x * sx + scaledY.x * sy + scaledZ.x * sz,
@@ -114,9 +120,7 @@ const sketch = (p: p5) => {
     p.push();
     p.orbitControl();
     drawFloorCell(1, 3, pallette[2][1]);
-    const cubeAxisZ = p.createVector(1, 0, 0);
-    const cubeAxisX = p.createVector(0, 1, 0);
-    drawCube(1, 3, cubeAxisZ, cubeAxisX, pallette);
+    drawCube(1, 3, 2, 0, 1, 1, pallette);
 
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
     drawAxes(p, axisLength);
