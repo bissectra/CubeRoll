@@ -2,9 +2,11 @@ import "./style.css";
 import p5 from "p5";
 
 const sketch = (p: p5) => {
-  const gridSize = 400;
-  const gridSpacing = 40;
-  const cameraDistanceScale = 1.5;
+  const gridCells = 5; // total number of grid lines per axis (must be odd to center the origin)
+  const gridSpacing = 60;
+  const gridHalfCount = gridCells / 2;
+  const gridRadius = gridHalfCount * gridSpacing;
+  const axisLength = gridRadius + gridSpacing;
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
@@ -19,10 +21,9 @@ const sketch = (p: p5) => {
 
     p.push();
     p.orbitControl();
-    p.scale(1 / cameraDistanceScale);
 
-    drawGrid(p, gridSize, gridSpacing);
-    drawAxes(p, gridSize);
+    drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
+    drawAxes(p, axisLength);
 
     p.pop();
   };
@@ -34,14 +35,15 @@ const sketch = (p: p5) => {
 
 new p5(sketch);
 
-function drawGrid(p: p5, size: number, spacing: number) {
+function drawGrid(p: p5, radius: number, spacing: number, halfCount: number) {
   p.strokeWeight(1);
   p.stroke(255, 255, 255, 120);
   p.noFill();
 
-  for (let i = -size; i <= size; i += spacing) {
-    p.line(i, -size, 0, i, size, 0);
-    p.line(-size, i, 0, size, i, 0);
+  for (let i = -halfCount; i <= halfCount; i++) {
+    const offset = i * spacing;
+    p.line(offset, -radius, 0, offset, radius, 0);
+    p.line(-radius, offset, 0, radius, offset, 0);
   }
 }
 
