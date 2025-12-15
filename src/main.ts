@@ -58,9 +58,9 @@ function drawGrid(p: p5, size: number, spacing: number) {
   p.pop();
 
   p.stroke(110, 255, 110);
-  p.line(0, 0, 0, 0, -length, 0);
+  p.line(0, 0, 0, 0, length, 0);
   p.push();
-  p.translate(0, -length, 0);
+  p.translate(0, length, 0);
   p.noStroke();
   p.fill(110, 255, 110);
   p.sphere(capDiameter);
