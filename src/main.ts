@@ -379,35 +379,35 @@ const sketch = (p: p5) => {
     p.lights();
     p.push();
     p.orbitControl();
-    drawCube(0, 0, ORIENTATION_QUATERNIONS["red:green"]!);
-    drawCube(2, 0, ORIENTATION_QUATERNIONS["red:blue"]!);
-    drawCube(4, 0, ORIENTATION_QUATERNIONS["red:white"]!);
-    drawCube(6, 0, ORIENTATION_QUATERNIONS["red:yellow"]!);
+    drawCube(0, 0, ORIENTATION_QUATERNIONS["red:green"]);
+    drawCube(2, 0, ORIENTATION_QUATERNIONS["red:blue"]);
+    drawCube(4, 0, ORIENTATION_QUATERNIONS["red:white"]);
+    drawCube(6, 0, ORIENTATION_QUATERNIONS["red:yellow"]);
 
-    drawCube(0, 2, ORIENTATION_QUATERNIONS["orange:green"]!);
-    drawCube(2, 2, ORIENTATION_QUATERNIONS["orange:blue"]!);
-    drawCube(4, 2, ORIENTATION_QUATERNIONS["orange:white"]!);
-    drawCube(6, 2, ORIENTATION_QUATERNIONS["orange:yellow"]!);
+    drawCube(0, 2, ORIENTATION_QUATERNIONS["orange:green"]);
+    drawCube(2, 2, ORIENTATION_QUATERNIONS["orange:blue"]);
+    drawCube(4, 2, ORIENTATION_QUATERNIONS["orange:white"]);
+    drawCube(6, 2, ORIENTATION_QUATERNIONS["orange:yellow"]);
 
-    drawCube(0, 4, ORIENTATION_QUATERNIONS["green:red"]!);
-    drawCube(2, 4, ORIENTATION_QUATERNIONS["green:orange"]!);
-    drawCube(4, 4, ORIENTATION_QUATERNIONS["green:white"]!);
-    drawCube(6, 4, ORIENTATION_QUATERNIONS["green:yellow"]!);
+    drawCube(0, 4, ORIENTATION_QUATERNIONS["green:red"]);
+    drawCube(2, 4, ORIENTATION_QUATERNIONS["green:orange"]);
+    drawCube(4, 4, ORIENTATION_QUATERNIONS["green:white"]);
+    drawCube(6, 4, ORIENTATION_QUATERNIONS["green:yellow"]);
 
-    drawCube(0, 6, ORIENTATION_QUATERNIONS["blue:red"]!);
-    drawCube(2, 6, ORIENTATION_QUATERNIONS["blue:orange"]!);
-    drawCube(4, 6, ORIENTATION_QUATERNIONS["blue:white"]!);
-    drawCube(6, 6, ORIENTATION_QUATERNIONS["blue:yellow"]!);
+    drawCube(0, 6, ORIENTATION_QUATERNIONS["blue:red"]);
+    drawCube(2, 6, ORIENTATION_QUATERNIONS["blue:orange"]);
+    drawCube(4, 6, ORIENTATION_QUATERNIONS["blue:white"]);
+    drawCube(6, 6, ORIENTATION_QUATERNIONS["blue:yellow"]);
 
-    drawCube(0, 8, ORIENTATION_QUATERNIONS["white:red"]!);
-    drawCube(2, 8, ORIENTATION_QUATERNIONS["white:orange"]!);
-    drawCube(4, 8, ORIENTATION_QUATERNIONS["white:green"]!);
-    drawCube(6, 8, ORIENTATION_QUATERNIONS["white:blue"]!);
+    drawCube(0, 8, ORIENTATION_QUATERNIONS["white:red"]);
+    drawCube(2, 8, ORIENTATION_QUATERNIONS["white:orange"]);
+    drawCube(4, 8, ORIENTATION_QUATERNIONS["white:green"]);
+    drawCube(6, 8, ORIENTATION_QUATERNIONS["white:blue"]);
 
-    drawCube(0, 10, ORIENTATION_QUATERNIONS["yellow:red"]!);
-    drawCube(2, 10, ORIENTATION_QUATERNIONS["yellow:orange"]!);
-    drawCube(4, 10, ORIENTATION_QUATERNIONS["yellow:green"]!);
-    drawCube(6, 10, ORIENTATION_QUATERNIONS["yellow:blue"]!);
+    drawCube(0, 10, ORIENTATION_QUATERNIONS["yellow:red"]);
+    drawCube(2, 10, ORIENTATION_QUATERNIONS["yellow:orange"]);
+    drawCube(4, 10, ORIENTATION_QUATERNIONS["yellow:green"]);
+    drawCube(6, 10, ORIENTATION_QUATERNIONS["yellow:blue"]);
 
     
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
