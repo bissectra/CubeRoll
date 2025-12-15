@@ -15,12 +15,28 @@ const sketch = (p: p5) => {
     p.setAttributes("antialias", true);
   };
 
+  const drawFloorCell = (
+    xIndex: number,
+    yIndex: number,
+    colorValue: p5.Color | string | number | number[]
+  ) => {
+    const cellCenterX = -gridRadius + gridSpacing / 2 + xIndex * gridSpacing;
+    const cellCenterY = -gridRadius + gridSpacing / 2 + yIndex * gridSpacing;
+    p.push();
+    p.translate(cellCenterX, cellCenterY, 0);
+    p.fill(colorValue);
+    p.noStroke();
+    p.plane(gridSpacing, gridSpacing);
+    p.pop();
+  };
+
   p.draw = () => {
     p.background(16);
     p.lights();
 
     p.push();
     p.orbitControl();
+    drawFloorCell(1, 3, p.color(200, 60, 60, 90));
 
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
     drawAxes(p, axisLength);
