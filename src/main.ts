@@ -4,7 +4,6 @@ import p5 from "p5";
 const sketch = (p: p5) => {
   const gridSize = 400;
   const gridSpacing = 40;
-  let rotation = 0;
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
@@ -19,8 +18,7 @@ const sketch = (p: p5) => {
 
     p.push();
     p.rotateX(-35);
-    p.rotateY(rotation);
-    rotation += 0.35;
+    p.orbitControl();
 
     drawGrid(p, gridSize, gridSpacing);
     drawAxes(p, gridSize);
@@ -46,7 +44,7 @@ function drawGrid(p: p5, size: number, spacing: number) {
   }
 }
 
-function drawAxes(p: p5, length: number) {
+ function drawAxes(p: p5, length: number) {
   const capDiameter = 12;
   p.strokeWeight(3);
 
@@ -60,9 +58,9 @@ function drawAxes(p: p5, length: number) {
   p.pop();
 
   p.stroke(110, 255, 110);
-  p.line(0, 0, 0, 0, length, 0);
+  p.line(0, 0, 0, 0, -length, 0);
   p.push();
-  p.translate(0, length, 0);
+  p.translate(0, -length, 0);
   p.noStroke();
   p.fill(110, 255, 110);
   p.sphere(capDiameter);
