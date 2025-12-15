@@ -1,6 +1,12 @@
 import p5 from "p5";
 import { Quaternion, quaternionRotateVector } from "./quaternions";
 
+export const GRID_CELLS = 11;
+export const GRID_SPACING = 60;
+export const GRID_HALF_COUNT = GRID_CELLS / 2;
+export const GRID_RADIUS = GRID_HALF_COUNT * GRID_SPACING;
+export const AXIS_LENGTH = GRID_RADIUS + GRID_SPACING;
+
 export type FaceColorName = "red" | "orange" | "green" | "blue" | "white" | "yellow";
 
 export type FaceOrientationKey =
@@ -263,14 +269,12 @@ export function drawCube(
   p: p5,
   xIndex: number,
   yIndex: number,
-  rotation: Quaternion,
-  gridSpacing: number,
-  gridRadius: number
+  rotation: Quaternion
 ) {
-  const cubeSize = gridSpacing;
+  const cubeSize = GRID_SPACING;
   const halfSize = cubeSize / 2;
-  const cellCenterX = -gridRadius + gridSpacing / 2 + xIndex * gridSpacing;
-  const cellCenterY = -gridRadius + gridSpacing / 2 + yIndex * gridSpacing;
+  const cellCenterX = -GRID_RADIUS + GRID_SPACING / 2 + xIndex * GRID_SPACING;
+  const cellCenterY = -GRID_RADIUS + GRID_SPACING / 2 + yIndex * GRID_SPACING;
   const center = p.createVector(cellCenterX, cellCenterY, halfSize);
 
   const vertex = ([sx, sy, sz]: [number, number, number]) => {
@@ -300,13 +304,11 @@ export function drawFloor(
   p: p5,
   xIndex: number,
   yIndex: number,
-  colorName: FaceColorName,
-  gridSpacing: number,
-  gridRadius: number
+  colorName: FaceColorName
 ) {
-  const halfSpacing = gridSpacing / 2;
-  const cellCenterX = -gridRadius + halfSpacing + xIndex * gridSpacing;
-  const cellCenterY = -gridRadius + halfSpacing + yIndex * gridSpacing;
+  const halfSpacing = GRID_SPACING / 2;
+  const cellCenterX = -GRID_RADIUS + halfSpacing + xIndex * GRID_SPACING;
+  const cellCenterY = -GRID_RADIUS + halfSpacing + yIndex * GRID_SPACING;
   const floorZ = -0.1;
 
   const corners: [number, number][] = [

@@ -1,14 +1,15 @@
 import "./style.css";
 import p5 from "p5";
-import { drawCube, drawFloor, FaceColorName, ORIENTATION_QUATERNIONS } from "./cube-factory";
+import {
+  drawFloor,
+  FaceColorName,
+  GRID_RADIUS,
+  GRID_SPACING,
+  GRID_HALF_COUNT,
+  AXIS_LENGTH,
+} from "./cube-factory";
 
 const sketch = (p: p5) => {
-  const gridCells = 11;
-  const gridSpacing = 60;
-  const gridHalfCount = gridCells / 2;
-  const gridRadius = gridHalfCount * gridSpacing;
-  const axisLength = gridRadius + gridSpacing;
-
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
     canvas.parent("app");
@@ -31,18 +32,16 @@ const sketch = (p: p5) => {
     p.push();
     p.orbitControl();
 
-    drawCube(p, 3, 3, ORIENTATION_QUATERNIONS["white:red"], gridSpacing, gridRadius);
-
     floorColorRows.forEach((row, rowIndex) => {
       row.forEach((color, colIndex) => {
         const xIndex = colIndex * 2;
         const yIndex = rowIndex * 2;
-        drawFloor(p, xIndex, yIndex, color, gridSpacing, gridRadius);
+        drawFloor(p, xIndex, yIndex, color);
       });
     });
 
-    drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
-    drawAxes(p, axisLength);
+    drawGrid(p, GRID_RADIUS, GRID_SPACING, GRID_HALF_COUNT);
+    drawAxes(p, AXIS_LENGTH);
     p.pop();
   };
 
