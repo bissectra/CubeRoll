@@ -19,7 +19,12 @@ const getFaceColor = (p: p5, name: FaceColorName) => {
 
 type Quaternion = { w: number; x: number; y: number; z: number };
 
-type FaceOrientationKey = `${FaceColorName}:${FaceColorName}`;
+type FaceOrientationKey = "red:green" | "red:blue" | "red:white" | "red:yellow" |
+  "orange:green" | "orange:blue" | "orange:white" | "orange:yellow" |
+  "green:red" | "green:orange" | "green:white" | "green:yellow" |
+  "blue:red" | "blue:orange" | "blue:white" | "blue:yellow" |
+  "white:red" | "white:orange" | "white:green" | "white:blue" |
+  "yellow:red" | "yellow:orange" | "yellow:green" | "yellow:blue";
 
 const FACE_COLOR_NAMES = Object.keys(
   FACE_COLOR_VALUES
