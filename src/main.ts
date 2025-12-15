@@ -4,15 +4,13 @@ import p5 from "p5";
 const sketch = (p: p5) => {
   const gridSize = 400;
   const gridSpacing = 40;
+  const cameraDistanceScale = 1.5;
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
     canvas.parent("app");
     p.angleMode(p.DEGREES);
     p.setAttributes("antialias", true);
-
-    const cameraZ = (p.height / 2) / p.tan(p.PI / 6);
-    p.camera(0, 0, cameraZ, 0, 0, 0, 0, 1, 0);
   };
 
   p.draw = () => {
@@ -21,6 +19,7 @@ const sketch = (p: p5) => {
 
     p.push();
     p.orbitControl();
+    p.scale(1 / cameraDistanceScale);
 
     drawGrid(p, gridSize, gridSpacing);
     drawAxes(p, gridSize);
@@ -46,7 +45,7 @@ function drawGrid(p: p5, size: number, spacing: number) {
   }
 }
 
- function drawAxes(p: p5, length: number) {
+function drawAxes(p: p5, length: number) {
   const capDiameter = 12;
   p.strokeWeight(3);
 
