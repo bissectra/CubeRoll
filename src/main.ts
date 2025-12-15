@@ -50,7 +50,7 @@ const COLOR_AXIS: Record<FaceColorName, Vector3> = {
   yellow: { x: 0, y: 0, z: -1 },
 };
 
-const ORIENTATION_QUATERNIONS: Partial<Record<FaceOrientationKey, Quaternion>> = {
+const ORIENTATION_QUATERNIONS: Record<FaceOrientationKey, Quaternion> = {
   "green:red": {
     w: 0.5,
     x: 0.5,
@@ -390,12 +390,12 @@ const sketch = (p: p5) => {
     drawCube(6, 2, ORIENTATION_QUATERNIONS["orange:yellow"]!);
 
     drawCube(0, 4, ORIENTATION_QUATERNIONS["green:red"]!);
-    //drawCube(2, 4, ORIENTATION_QUATERNIONS["green:blue"]!);
+    drawCube(2, 4, ORIENTATION_QUATERNIONS["green:orange"]!);
     drawCube(4, 4, ORIENTATION_QUATERNIONS["green:white"]!);
     drawCube(6, 4, ORIENTATION_QUATERNIONS["green:yellow"]!);
 
     drawCube(0, 6, ORIENTATION_QUATERNIONS["blue:red"]!);
-    // drawCube(2, 6, ORIENTATION_QUATERNIONS["blue:green"]!);
+    drawCube(2, 6, ORIENTATION_QUATERNIONS["blue:orange"]!);
     drawCube(4, 6, ORIENTATION_QUATERNIONS["blue:white"]!);
     drawCube(6, 6, ORIENTATION_QUATERNIONS["blue:yellow"]!);
 
