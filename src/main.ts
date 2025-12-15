@@ -6,7 +6,6 @@ import {
   GRID_RADIUS,
   GRID_SPACING,
   GRID_HALF_COUNT,
-  AXIS_LENGTH,
 } from "./cube-factory";
 
 const sketch = (p: p5) => {
@@ -30,7 +29,6 @@ const sketch = (p: p5) => {
     p.background(16);
     p.lights();
     p.push();
-    p.orbitControl();
 
     floorColorRows.forEach((row, rowIndex) => {
       row.forEach((color, colIndex) => {
@@ -40,8 +38,7 @@ const sketch = (p: p5) => {
       });
     });
 
-    drawGrid(p, GRID_RADIUS, GRID_SPACING, GRID_HALF_COUNT);
-    drawAxes(p, AXIS_LENGTH);
+    drawGrid(p);
     p.pop();
   };
 
@@ -52,46 +49,14 @@ const sketch = (p: p5) => {
 
 new p5(sketch);
 
-function drawGrid(p: p5, radius: number, spacing: number, halfCount: number) {
+function drawGrid(p: p5) {
   p.strokeWeight(1);
   p.stroke(255, 255, 255, 120);
   p.noFill();
 
-  for (let i = -halfCount; i <= halfCount; i++) {
-    const offset = i * spacing;
-    p.line(offset, -radius, 0, offset, radius, 0);
-    p.line(-radius, offset, 0, radius, offset, 0);
+  for (let i = -GRID_HALF_COUNT; i <= GRID_HALF_COUNT; i++) {
+    const offset = i * GRID_SPACING;
+    p.line(offset, -GRID_RADIUS, 0, offset, GRID_RADIUS, 0);
+    p.line(-GRID_RADIUS, offset, 0, GRID_RADIUS, offset, 0);
   }
-}
-
-function drawAxes(p: p5, length: number) {
-  const capDiameter = 12;
-  p.strokeWeight(3);
-
-  p.stroke(255, 110, 110);
-  p.line(0, 0, 0, length, 0, 0);
-  p.push();
-  p.translate(length, 0, 0);
-  p.noStroke();
-  p.fill(255, 110, 110);
-  p.sphere(capDiameter);
-  p.pop();
-
-  p.stroke(110, 255, 110);
-  p.line(0, 0, 0, 0, length, 0);
-  p.push();
-  p.translate(0, length, 0);
-  p.noStroke();
-  p.fill(110, 255, 110);
-  p.sphere(capDiameter);
-  p.pop();
-
-  p.stroke(110, 170, 255);
-  p.line(0, 0, 0, 0, 0, length);
-  p.push();
-  p.translate(0, 0, length);
-  p.noStroke();
-  p.fill(110, 170, 255);
-  p.sphere(capDiameter);
-  p.pop();
 }
