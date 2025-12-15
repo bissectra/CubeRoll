@@ -10,6 +10,9 @@ const sketch = (p: p5) => {
     canvas.parent("app");
     p.angleMode(p.DEGREES);
     p.setAttributes("antialias", true);
+
+    const cameraZ = (p.height / 2) / p.tan(p.PI / 6);
+    p.camera(0, 0, cameraZ, 0, 0, 0, 0, 1, 0);
   };
 
   p.draw = () => {
@@ -17,7 +20,6 @@ const sketch = (p: p5) => {
     p.lights();
 
     p.push();
-    p.rotateX(-35);
     p.orbitControl();
 
     drawGrid(p, gridSize, gridSpacing);
