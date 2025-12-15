@@ -45,104 +45,160 @@ const COLOR_AXIS: Record<FaceColorName, Vector3> = {
   yellow: { x: 0, y: 0, z: -1 },
 };
 
-const cross = (a: Vector3, b: Vector3): Vector3 => ({
-  x: a.y * b.z - a.z * b.y,
-  y: a.z * b.x - a.x * b.z,
-  z: a.x * b.y - a.y * b.x,
-});
-
-const normalizeVector = (v: Vector3): Vector3 => {
-  const length = Math.hypot(v.x, v.y, v.z);
-  return { x: v.x / length, y: v.y / length, z: v.z / length };
+const ORIENTATION_QUATERNIONS: Partial<Record<FaceOrientationKey, Quaternion>> = {
+  "green:red": {
+    w: 0.5,
+    x: 0.5,
+    y: 0.5,
+    z: 0.5,
+  },
+  "blue:orange": {
+    w: -0.5,
+    x: 0.5,
+    y: -0.5,
+    z: 0.5,
+  },
+  "red:blue": {
+    w: 0,
+    x: 0.7071067811865475,
+    y: 0,
+    z: 0.7071067811865476,
+  },
+  "orange:green": {
+    w: 0.7071067811865476,
+    x: 0,
+    y: 0.7071067811865475,
+    z: 0,
+  },
+  "blue:red": {
+    w: 0.5,
+    x: -0.5,
+    y: -0.5,
+    z: 0.5,
+  },
+  "green:orange": {
+    w: -0.5,
+    x: -0.5,
+    y: 0.5,
+    z: 0.5,
+  },
+  "red:green": {
+    w: 0.7071067811865476,
+    x: 0,
+    y: -0.7071067811865475,
+    z: 0,
+  },
+  "orange:blue": {
+    w: 0,
+    x: -0.7071067811865475,
+    y: 0,
+    z: 0.7071067811865476,
+  },
+  "blue:white": {
+    w: 0.7071067811865476,
+    x: -0.7071067811865475,
+    y: 0,
+    z: 0,
+  },
+  "green:white": {
+    w: 0,
+    x: 0,
+    y: 0.7071067811865475,
+    z: 0.7071067811865476,
+  },
+  "red:white": {
+    w: -0.5,
+    x: 0.5,
+    y: 0.5,
+    z: 0.5,
+  },
+  "orange:white": {
+    w: 0.5,
+    x: -0.5,
+    y: 0.5,
+    z: 0.5,
+  },
+  "green:yellow": {
+    w: 0.7071067811865476,
+    x: 0.7071067811865475,
+    y: 0,
+    z: 0,
+  },
+  "blue:yellow": {
+    w: 0,
+    x: 0,
+    y: -0.7071067811865475,
+    z: 0.7071067811865476,
+  },
+  "red:yellow": {
+    w: 0.5,
+    x: 0.5,
+    y: -0.5,
+    z: 0.5,
+  },
+  "orange:yellow": {
+    w: -0.5,
+    x: -0.5,
+    y: -0.5,
+    z: 0.5,
+  },
+  "white:green": {
+    w: 1,
+    x: 0,
+    y: 0,
+    z: 0,
+  },
+  "white:blue": {
+    w: 0,
+    x: 0,
+    y: 0,
+    z: 1,
+  },
+  "white:red": {
+    w: 0.7071067811865476,
+    x: 0,
+    y: 0,
+    z: 0.7071067811865475,
+  },
+  "white:orange": {
+    w: 0.7071067811865476,
+    x: 0,
+    y: 0,
+    z: -0.7071067811865475,
+  },
+  "yellow:blue": {
+    w: 0,
+    x: 1,
+    y: 0,
+    z: 0,
+  },
+  "yellow:green": {
+    w: 0,
+    x: 0,
+    y: 1,
+    z: 0,
+  },
+  "yellow:red": {
+    w: 0,
+    x: 0.7071067811865475,
+    y: 0.7071067811865476,
+    z: 0,
+  },
+  "yellow:orange": {
+    w: 0,
+    x: -0.7071067811865475,
+    y: 0.7071067811865476,
+    z: 0,
+  },
 };
 
-const quaternionFromMatrix = (m: {
-  r00: number;
-  r01: number;
-  r02: number;
-  r10: number;
-  r11: number;
-  r12: number;
-  r20: number;
-  r21: number;
-  r22: number;
-}): Quaternion => {
-  const trace = m.r00 + m.r11 + m.r22;
-  if (trace > 0) {
-    const s = 0.5 / Math.sqrt(trace + 1);
-    return {
-      w: 0.25 / s,
-      x: (m.r21 - m.r12) * s,
-      y: (m.r02 - m.r20) * s,
-      z: (m.r10 - m.r01) * s,
-    };
-  }
+const CUBE_SYMMETRY_KEYS = Object.keys(ORIENTATION_QUATERNIONS).sort((a, b) =>
+  a.localeCompare(b)
+) as FaceOrientationKey[];
 
-  if (m.r00 > m.r11 && m.r00 > m.r22) {
-    const s = 2 * Math.sqrt(1 + m.r00 - m.r11 - m.r22);
-    return {
-      w: (m.r21 - m.r12) / s,
-      x: 0.25 * s,
-      y: (m.r01 + m.r10) / s,
-      z: (m.r02 + m.r20) / s,
-    };
-  }
-
-  if (m.r11 > m.r22) {
-    const s = 2 * Math.sqrt(1 + m.r11 - m.r00 - m.r22);
-    return {
-      w: (m.r02 - m.r20) / s,
-      x: (m.r01 + m.r10) / s,
-      y: 0.25 * s,
-      z: (m.r12 + m.r21) / s,
-    };
-  }
-
-  const s = 2 * Math.sqrt(1 + m.r22 - m.r00 - m.r11);
-  return {
-    w: (m.r10 - m.r01) / s,
-    x: (m.r02 + m.r20) / s,
-    y: (m.r12 + m.r21) / s,
-    z: 0.25 * s,
-  };
-};
-
-const quaternionFromAxes = (
-  xAxis: Vector3,
-  yAxis: Vector3,
-  zAxis: Vector3
-): Quaternion =>
-  quaternionFromMatrix({
-    r00: xAxis.x,
-    r01: yAxis.x,
-    r02: zAxis.x,
-    r10: xAxis.y,
-    r11: yAxis.y,
-    r12: zAxis.y,
-    r20: xAxis.z,
-    r21: yAxis.z,
-    r22: zAxis.z,
-  });
-
-const ORIENTATION_QUATERNIONS: Record<FaceOrientationKey, Quaternion> = (() => {
-  const map = {} as Record<FaceOrientationKey, Quaternion>;
-
-  FACE_COLOR_NAMES.forEach((zColor) => {
-    FACE_COLOR_NAMES.forEach((xColor) => {
-      if (xColor === zColor || xColor === OPPOSITE_FACE_COLOR[zColor]) return;
-      const key = `${zColor}:${xColor}` as FaceOrientationKey;
-      const zAxis = COLOR_AXIS[zColor];
-      const xAxis = COLOR_AXIS[xColor];
-      const yAxis = normalizeVector(cross(zAxis, xAxis));
-      map[key] = quaternionFromAxes(xAxis, yAxis, zAxis);
-    });
-  });
-
-  return map;
-})();
-
-const getOrientationQuaternion = (key: FaceOrientationKey) =>
-  ORIENTATION_QUATERNIONS[key];
+const CUBE_SYMMETRY_QUATERNIONS = CUBE_SYMMETRY_KEYS.map(
+  (key) => ORIENTATION_QUATERNIONS[key]
+);
 
 const quaternionFromAxisAngle = (
   axis: p5.Vector,
@@ -255,10 +311,26 @@ const sketch = (p: p5) => {
   const gridRadius = gridHalfCount * gridSpacing;
   const axisLength = gridRadius + gridSpacing;
 
-  const baseOrientation: FaceOrientationKey = "white:red";
-  let cubeRotation: Quaternion = quaternionNormalize(
-    { ...getOrientationQuaternion(baseOrientation) }
+  const evenIndices = Array.from({ length: gridCells }, (_, idx) => idx).filter(
+    (idx) => idx % 2 === 0
   );
+
+  const symmetryQuaternions = CUBE_SYMMETRY_QUATERNIONS;
+  const orientationGrid: {
+    xIndex: number;
+    yIndex: number;
+    orientation: Quaternion;
+  }[] = [];
+
+  let entryIndex = 0;
+  for (const xIndex of evenIndices) {
+    for (const yIndex of evenIndices) {
+      if (entryIndex >= symmetryQuaternions.length) break;
+      const orientation = symmetryQuaternions[entryIndex++];
+      orientationGrid.push({ xIndex, yIndex, orientation });
+    }
+    if (entryIndex >= symmetryQuaternions.length) break;
+  }
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
@@ -298,15 +370,41 @@ const sketch = (p: p5) => {
   };
 
   p.draw = () => {
-    const spinAxis = p.createVector(0.4, 1, 0.2).normalize();
-    const deltaQuat = quaternionFromAxisAngle(spinAxis, p.radians(0.7));
-    cubeRotation = quaternionNormalize(quaternionMultiply(deltaQuat, cubeRotation));
-
     p.background(16);
     p.lights();
     p.push();
     p.orbitControl();
-    drawCube(1, 3, cubeRotation);
+    drawCube(0, 0, ORIENTATION_QUATERNIONS["red:green"]!);
+    drawCube(2, 0, ORIENTATION_QUATERNIONS["red:blue"]!);
+    drawCube(4, 0, ORIENTATION_QUATERNIONS["red:white"]!);
+    drawCube(6, 0, ORIENTATION_QUATERNIONS["red:yellow"]!);
+
+    drawCube(0, 2, ORIENTATION_QUATERNIONS["orange:green"]!);
+    drawCube(2, 2, ORIENTATION_QUATERNIONS["orange:blue"]!);
+    drawCube(4, 2, ORIENTATION_QUATERNIONS["orange:white"]!);
+    drawCube(6, 2, ORIENTATION_QUATERNIONS["orange:yellow"]!);
+
+    drawCube(0, 4, ORIENTATION_QUATERNIONS["green:red"]!);
+    //drawCube(2, 4, ORIENTATION_QUATERNIONS["green:blue"]!);
+    drawCube(4, 4, ORIENTATION_QUATERNIONS["green:white"]!);
+    drawCube(6, 4, ORIENTATION_QUATERNIONS["green:yellow"]!);
+
+    drawCube(0, 6, ORIENTATION_QUATERNIONS["blue:red"]!);
+    // drawCube(2, 6, ORIENTATION_QUATERNIONS["blue:green"]!);
+    drawCube(4, 6, ORIENTATION_QUATERNIONS["blue:white"]!);
+    drawCube(6, 6, ORIENTATION_QUATERNIONS["blue:yellow"]!);
+
+    drawCube(0, 8, ORIENTATION_QUATERNIONS["white:red"]!);
+    drawCube(2, 8, ORIENTATION_QUATERNIONS["white:orange"]!);
+    drawCube(4, 8, ORIENTATION_QUATERNIONS["white:green"]!);
+    drawCube(6, 8, ORIENTATION_QUATERNIONS["white:blue"]!);
+
+    drawCube(0, 10, ORIENTATION_QUATERNIONS["yellow:red"]!);
+    drawCube(2, 10, ORIENTATION_QUATERNIONS["yellow:orange"]!);
+    drawCube(4, 10, ORIENTATION_QUATERNIONS["yellow:green"]!);
+    drawCube(6, 10, ORIENTATION_QUATERNIONS["yellow:blue"]!);
+
+    
     drawGrid(p, gridRadius, gridSpacing, gridHalfCount);
     drawAxes(p, axisLength);
     p.pop();
