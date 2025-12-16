@@ -57,6 +57,12 @@ const sketch = (p: p5) => {
     () => movement.nextLevel(),
     "fa-solid fa-chevron-right"
   );
+  const bestSolutionButton = createControlButton(
+    "Load best solution",
+    () => movement.loadBestSolutionHistory(),
+    "fa-solid fa-star"
+  );
+  bestSolutionButton.classList.add("control-best");
 
   const statsLink = document.createElement("a");
   statsLink.className = "stats-link";
@@ -65,10 +71,7 @@ const sketch = (p: p5) => {
   statsLink.appendChild(createIcon("fa-solid fa-chart-line"));
   statsLink.appendChild(createControlLabel("Stats"));
 
-  controlPanel.appendChild(resetButton);
-  controlPanel.appendChild(previousLevelButton);
-  controlPanel.appendChild(nextLevelButton);
-  controlPanel.appendChild(statsLink);
+  controlPanel.append(bestSolutionButton, resetButton, previousLevelButton, nextLevelButton, statsLink);
   document.body.appendChild(controlPanel);
 
   const updateStatsLink = () => {
@@ -104,6 +107,7 @@ const sketch = (p: p5) => {
       movement.hasBestSolution() && movement.canAdvanceLevel();
     nextLevelButton.disabled = !canAdvance;
     previousLevelButton.disabled = !movement.canGoBack();
+    bestSolutionButton.disabled = !movement.hasBestSolution();
   };
 
   p.mousePressed = () => movement.handleMousePressed();

@@ -69,6 +69,16 @@ canvas {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 
+.control-panel .control-best {
+  background: linear-gradient(135deg, #2dd06f, #1d9546);
+}
+
+.control-panel .control-best:hover {
+  background-position: 100% 100%;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(15, 173, 104, 0.5);
+}
+
 .control-panel button:hover,
 .control-panel a:hover {
   background-position: 100% 100%;

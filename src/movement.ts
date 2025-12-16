@@ -599,6 +599,40 @@ export class MovementManager {
     return this.bestSolution !== null;
   }
 
+  private applyMoveWithoutAnimation(entry: MoveHistoryEntry) {
+    const cube = this.cubes.find((c) => c.id === entry.cubeId);
+    if (!cube) {
+      return false;
+    }
+    const targetOrientation =
+      DIRECTIONAL_ORIENTATION_MAPS[entry.direction][cube.orientation];
+    if (!targetOrientation) {
+      return false;
+    }
+    const [offsetX, offsetY] = directionOffsets[entry.direction];
+    cube.position = {
+      x: cube.position.x + offsetX,
+      y: cube.position.y + offsetY,
+    };
+    cube.orientation = targetOrientation;
+    return true;
+  }
+
+  public loadBestSolutionHistory() {
+    const solution = this.bestSolution;
+    if (!solution) {
+      return false;
+    }
+    this.loadLevelState(false);
+    this.moveHistory = [];
+    for (const entry of solution.moveHistory) {
+      this.applyMoveWithoutAnimation(entry);
+      this.moveHistory.push(entry);
+    }
+    this.persistState();
+    return true;
+  }
+
   public canAdvanceLevel() {
     const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
     return this.count < unlockedLimit;
