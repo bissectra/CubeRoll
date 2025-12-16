@@ -330,9 +330,6 @@ export class MovementManager {
     currentX: 0,
     currentY: 0,
   };
-  private worldToScreen:
-    | ((vector: p5.Vector) => p5.Vector)
-    | undefined = undefined;
   private gridSize: number;
   private count: number;
   private seedValue: string;
@@ -344,7 +341,6 @@ export class MovementManager {
   private bestSolutionKey: string | null = null;
 
   constructor(private readonly p: p5) {
-    this.worldToScreen = (p as any).worldToScreen?.bind(p);
     const params = getInitialParams();
     this.gridSize = params.gridSize;
     this.count = params.count;
@@ -404,11 +400,15 @@ export class MovementManager {
   }
 
   private projectWorldPoint(point: { x: number; y: number; z: number }) {
-    if (this.worldToScreen) {
-      const projected = this.worldToScreen(
-        this.p.createVector(point.x, point.y, point.z)
+    if (typeof (this.p as any).screenPosition === "function") {
+      const projected = (this.p as any).screenPosition(
+        point.x,
+        point.y,
+        point.z
       );
-      return { x: projected.x, y: projected.y };
+      if (projected) {
+        return { x: projected.x, y: projected.y };
+      }
     }
     return {
       x: this.p.width / 2 + point.x,
