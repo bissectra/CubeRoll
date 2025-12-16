@@ -62,10 +62,11 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   const url = new URL(window.location.href);
   const currentParams = new URLSearchParams(url.search);
 
-  // If level param is present, only keep the level param
-  if (currentParams.has("level")) {
+  // If level param is present and has a value, only keep the level param
+  const levelValue = currentParams.get("level");
+  if (levelValue) {
     const orderedParams = new URLSearchParams();
-    orderedParams.set("level", currentParams.get("level")!);
+    orderedParams.set("level", levelValue);
     
     // Preserve any other non-standard params
     currentParams.forEach((value, key) => {
@@ -87,7 +88,7 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   orderedParams.set("seed", seedValue);
 
   currentParams.forEach((value, key) => {
-    if (["m", "n", "seed"].includes(key)) return;
+    if (["m", "n", "seed", "level"].includes(key)) return;
     orderedParams.set(key, value);
   });
 
@@ -107,20 +108,23 @@ const getInitialParams = () => {
   // If level param is present, ignore other params
   if (params.has("level")) {
     const levelId = params.get("level");
-    const safeGrid = getDefaultGridSize();
-    setGridCells(safeGrid);
-    const safeSeedValue = getTodaySeedValue();
-    const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
-    
-    ensureUrlParams(safeGrid, safeCount, safeSeedValue);
-    
-    return {
-      gridSize: safeGrid,
-      count: safeCount,
-      seedValue: safeSeedValue,
-      seed: hashSeedString(safeSeedValue),
-      levelId,
-    };
+    // Only process if level param has a non-empty value
+    if (levelId) {
+      const safeGrid = getDefaultGridSize();
+      setGridCells(safeGrid);
+      const safeSeedValue = getTodaySeedValue();
+      const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
+      
+      ensureUrlParams(safeGrid, safeCount, safeSeedValue);
+      
+      return {
+        gridSize: safeGrid,
+        count: safeCount,
+        seedValue: safeSeedValue,
+        seed: hashSeedString(safeSeedValue),
+        levelId,
+      };
+    }
   }
   
   const requestedGrid = parseNumberParam(
