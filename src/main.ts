@@ -1,14 +1,15 @@
 import "./style.css";
 import p5 from "p5";
 import {
+  drawCube,
   drawFloor,
   FaceColorName,
+  GRID_HALF_COUNT,
   GRID_RADIUS,
   GRID_SPACING,
-  GRID_HALF_COUNT,
   ORIENTATION_QUATERNIONS,
-  drawCube,
 } from "./cube-factory";
+import { quaternionSlerp } from "./quaternions";
 
 const sketch = (p: p5) => {
   p.setup = () => {
@@ -26,6 +27,14 @@ const sketch = (p: p5) => {
     ["white", "white", "white", "white"],
     ["yellow", "yellow", "yellow", "yellow"],
   ];
+  const cubePath = {
+    start: { x: 1, y: 1 },
+    end: { x: 2, y: 1 },
+  };
+  const animationDuration = 240;
+  let animationFrame = 0;
+  const startOrientation = ORIENTATION_QUATERNIONS["white:blue"];
+  const endOrientation = ORIENTATION_QUATERNIONS["red:blue"];
 
   p.draw = () => {
     p.background(16);
@@ -40,7 +49,20 @@ const sketch = (p: p5) => {
       });
     });
 
-    drawCube(p, 1,1, ORIENTATION_QUATERNIONS["white:blue"]);
+    const progress =
+      (animationFrame % animationDuration) / animationDuration;
+    const easedProgress = (1 - Math.cos(Math.PI * progress)) / 2;
+    const currentX =
+      cubePath.start.x + (cubePath.end.x - cubePath.start.x) * easedProgress;
+    const currentY =
+      cubePath.start.y + (cubePath.end.y - cubePath.start.y) * easedProgress;
+    const currentOrientation = quaternionSlerp(
+      startOrientation,
+      endOrientation,
+      easedProgress
+    );
+    drawCube(p, currentX, currentY, currentOrientation);
+    animationFrame += 1;
 
     drawGrid(p);
     p.pop();

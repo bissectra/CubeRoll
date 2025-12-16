@@ -45,3 +45,47 @@ export const quaternionRotateVector = (
   const term3 = u.copy().cross(vector).mult(2 * quaternion.w);
   return term1.add(term2).add(term3);
 };
+
+export const quaternionSlerp = (
+  a: Quaternion,
+  b: Quaternion,
+  t: number
+): Quaternion => {
+  let cosHalfTheta = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+
+  if (cosHalfTheta < 0) {
+    cosHalfTheta = -cosHalfTheta;
+    b = {
+      w: -b.w,
+      x: -b.x,
+      y: -b.y,
+      z: -b.z,
+    };
+  }
+
+  if (Math.abs(cosHalfTheta) >= 1.0) {
+    return { ...a };
+  }
+
+  const halfTheta = Math.acos(Math.min(Math.max(cosHalfTheta, -1), 1));
+  const sinHalfTheta = Math.sqrt(1 - cosHalfTheta * cosHalfTheta);
+
+  if (Math.abs(sinHalfTheta) < 0.0001) {
+    return {
+      w: a.w * (1 - t) + b.w * t,
+      x: a.x * (1 - t) + b.x * t,
+      y: a.y * (1 - t) + b.y * t,
+      z: a.z * (1 - t) + b.z * t,
+    };
+  }
+
+  const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+  const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+  return {
+    w: a.w * ratioA + b.w * ratioB,
+    x: a.x * ratioA + b.x * ratioB,
+    y: a.y * ratioA + b.y * ratioB,
+    z: a.z * ratioA + b.z * ratioB,
+  };
+};
