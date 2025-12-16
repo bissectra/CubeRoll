@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         stats: resolve(__dirname, "stats.html"),
+        levelEditor: resolve(__dirname, "editor.html"),
       },
     },
   },
