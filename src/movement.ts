@@ -100,14 +100,19 @@ const getInitialParams = () => {
     Math.max(0, requestedCount)
   );
   const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
+  const sanitizeSeed = (value: string) => {
+    const cleaned = value.replace(/[^a-zA-Z0-9]/g, "");
+    return cleaned.length === 0 ? DEFAULT_SEED_VALUE : cleaned;
+  };
+  const safeSeedValue = sanitizeSeed(requestedSeedValue);
 
-  ensureUrlParams(safeGrid, safeCount, requestedSeedValue);
+  ensureUrlParams(safeGrid, safeCount, safeSeedValue);
 
   return {
     gridSize: safeGrid,
     count: safeCount,
-    seedValue: requestedSeedValue,
-    seed: hashSeedString(requestedSeedValue),
+    seedValue: safeSeedValue,
+    seed: hashSeedString(safeSeedValue),
   };
 };
 
@@ -354,9 +359,6 @@ export class MovementManager {
     if (this.storageKey) {
       this.bestSolutionKey = buildBestSolutionKey(this.storageKey);
       this.bestSolution = loadBestSolution(this.bestSolutionKey);
-      if (this.bestSolution === null && this.bestSolutionKey) {
-        saveBestSolution(this.bestSolutionKey, null);
-      }
     }
     this.persistState();
   }
@@ -439,14 +441,23 @@ export class MovementManager {
     });
   }
 
+  private getPrimaryColorFromOrientation(orientation: FaceOrientationKey) {
+    return orientation.split(":")[0] as FaceColorName;
+  }
+
   private checkGoalsComplete() {
-    const goalSet = new Set(
-      this.goals.map((goal) => `${goal.position.x},${goal.position.y}`)
+    return this.goals.every((goal) =>
+      this.cubes.some((cube) => {
+        const matchesPosition =
+          cube.position.x === goal.position.x &&
+          cube.position.y === goal.position.y;
+        if (!matchesPosition) {
+          return false;
+        }
+        const primaryColor = this.getPrimaryColorFromOrientation(cube.orientation);
+        return primaryColor === goal.color;
+      })
     );
-    const cubeSet = new Set(
-      this.cubes.map((cube) => `${cube.position.x},${cube.position.y}`)
-    );
-    return [...goalSet.values()].every((position) => cubeSet.has(position));
   }
 
   private tryUpdateBestSolution() {
