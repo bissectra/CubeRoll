@@ -54,6 +54,30 @@ const hashSeedString = (value: string) => {
   return hash >>> 0;
 };
 
+const ensureLevelOnlyUrl = (levelValue: string) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  const currentParams = new URLSearchParams(url.search);
+  
+  const orderedParams = new URLSearchParams();
+  orderedParams.set("level", levelValue);
+  
+  // Preserve any other non-standard params
+  currentParams.forEach((value, key) => {
+    if (["m", "n", "seed", "level"].includes(key)) return;
+    orderedParams.set(key, value);
+  });
+
+  const newSearch = orderedParams.toString();
+  if (newSearch !== url.search.substring(1)) {
+    url.search = newSearch;
+    window.history.replaceState(window.history.state, "", url.toString());
+  }
+};
+
 const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string) => {
   if (typeof window === "undefined") {
     return;
@@ -62,13 +86,20 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   const url = new URL(window.location.href);
   const currentParams = new URLSearchParams(url.search);
 
+  // If level param is present and has a value, only keep the level param
+  const levelValue = currentParams.get("level");
+  if (levelValue) {
+    ensureLevelOnlyUrl(levelValue);
+    return;
+  }
+
   const orderedParams = new URLSearchParams();
   orderedParams.set("m", String(gridSize));
   orderedParams.set("n", String(countParam));
   orderedParams.set("seed", seedValue);
 
   currentParams.forEach((value, key) => {
-    if (["m", "n", "seed"].includes(key)) return;
+    if (["m", "n", "seed", "level"].includes(key)) return;
     orderedParams.set(key, value);
   });
 
@@ -84,6 +115,26 @@ const getInitialParams = () => {
     typeof window === "undefined"
       ? new URLSearchParams()
       : new URLSearchParams(window.location.search);
+  
+  // If level param is present with a non-empty value, ignore other params
+  const levelId = params.get("level");
+  if (levelId) {
+    const safeGrid = getDefaultGridSize();
+    setGridCells(safeGrid);
+    const safeSeedValue = getTodaySeedValue();
+    const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
+    
+    ensureLevelOnlyUrl(levelId);
+    
+    return {
+      gridSize: safeGrid,
+      count: safeCount,
+      seedValue: safeSeedValue,
+      seed: hashSeedString(safeSeedValue),
+      levelId,
+    };
+  }
+  
   const requestedGrid = parseNumberParam(
     params.get("m"),
     getDefaultGridSize()
@@ -116,6 +167,7 @@ const getInitialParams = () => {
     count: safeCount,
     seedValue: safeSeedValue,
     seed: hashSeedString(safeSeedValue),
+    levelId: null,
   };
 };
 
@@ -378,6 +430,7 @@ export class MovementManager {
   private count: number;
   private seedValue: string;
   private seed: number;
+  private levelId: string | null;
   private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
   private storageKey: string | null = null;
@@ -390,6 +443,7 @@ export class MovementManager {
     this.count = params.count;
     this.seedValue = params.seedValue;
     this.seed = params.seed;
+    this.levelId = params.levelId ?? null;
     this.loadLevelState();
   }
 
