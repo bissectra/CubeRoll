@@ -917,4 +917,25 @@ export class MovementManager {
   public getMoveCount() {
     return this.moveHistory.length;
   }
+
+  public isCurrentHistoryBestSolution() {
+    if (!this.bestSolution) {
+      return false;
+    }
+    const solutionMoves = this.bestSolution.moveHistory;
+    if (solutionMoves.length !== this.moveHistory.length) {
+      return false;
+    }
+    for (let i = 0; i < solutionMoves.length; i += 1) {
+      const solution = solutionMoves[i];
+      const current = this.moveHistory[i];
+      if (
+        solution.cubeId !== current.cubeId ||
+        solution.direction !== current.direction
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

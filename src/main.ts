@@ -121,7 +121,9 @@ const sketch = (p: p5) => {
       movement.hasBestSolution() && movement.canAdvanceLevel();
     nextLevelButton.disabled = !canAdvance;
     previousLevelButton.disabled = !movement.canGoBack();
-    bestSolutionButton.disabled = !movement.hasBestSolution();
+    const bestSolutionActive =
+      movement.hasBestSolution() && !movement.isCurrentHistoryBestSolution();
+    bestSolutionButton.disabled = !bestSolutionActive;
     const todaySeedValue = getTodaySeedValue();
     todaySeedButton.disabled = movement.getSeedValue() === todaySeedValue;
   };
