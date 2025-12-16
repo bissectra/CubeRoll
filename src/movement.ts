@@ -209,6 +209,11 @@ const generateLevel = (
     });
   }
 
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+
   const goals: Goal[] = [];
   for (let index = 0; index < targetCount; index++) {
     const position = positions[index];
