@@ -40,74 +40,59 @@ canvas {
 
 .control-panel {
   position: absolute;
-  top: 12px;
-  right: 12px;
   z-index: 15;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  padding: 0 6px;
+  justify-content: center;
 }
 
 .control-panel button,
 .control-panel a {
-  padding: 6px 12px;
-  border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.08);
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.45));
+  background-size: 200% 200%;
   color: #fff;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 56px;
+  height: 56px;
   text-decoration: none;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 
 .control-panel button:hover,
 .control-panel a:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background-position: 100% 100%;
+  transform: translateY(-1px);
 }
 
 .control-panel button:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
 }
 
-@media (max-width: 600px) {
-  .control-panel {
-    flex-direction: column;
-    top: auto;
-    bottom: 16px;
-    right: 50%;
-    transform: translateX(50%);
-    background: transparent;
-    padding: 0;
-  }
+.control-panel .control-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 
-  .control-panel button,
-  .control-panel a {
-    letter-spacing: normal;
-    text-transform: none;
-    font-size: 0.9rem;
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    border-color: transparent;
-    min-width: 140px;
-  }
-
-  .control-panel button:hover,
-  .control-panel a:hover {
-    background: rgba(255, 255, 255, 0.22);
-  }
-
-  .control-panel button:disabled {
-    opacity: 0.4;
-    background: rgba(255, 255, 255, 0.08);
-    border-color: transparent;
-  }
+.control-panel .control-icon {
+  font-size: 1.3rem;
 }

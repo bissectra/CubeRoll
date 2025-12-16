@@ -69,11 +69,6 @@ meta.textContent = `Grid ${gridSize}×${gridSize} · Seed ${seedValue}`;
 header.appendChild(heading);
 header.appendChild(meta);
 
-const intro = document.createElement("p");
-intro.className = "stats-intro";
-intro.textContent =
-  "Only levels with recorded best solutions will appear below.";
-
 const statsList = document.createElement("div");
 statsList.className = "stats-grid";
 if (moveStats.length === 0) {
@@ -98,11 +93,6 @@ if (moveStats.length === 0) {
   });
 }
 
-const note = document.createElement("p");
-note.className = "stats-note";
-note.textContent =
-  "Each entry shows the move count from the best stored solution.";
-
 const actions = document.createElement("div");
 actions.className = "stats-actions";
 const backLink = document.createElement("a");
@@ -117,4 +107,4 @@ backLink.addEventListener("click", (event) => {
 });
 actions.appendChild(backLink);
 
-root.append(header, intro, statsList, note, actions);
+root.append(header, statsList, actions);

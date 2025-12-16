@@ -14,25 +14,60 @@ const sketch = (p: p5) => {
   const movement = new MovementManager(p);
   const controlPanel = document.createElement("div");
   controlPanel.className = "control-panel";
-  const resetButton = document.createElement("button");
-  resetButton.type = "button";
-  resetButton.textContent = "Reset level";
-  resetButton.addEventListener("click", () => movement.resetLevel());
-  const previousLevelButton = document.createElement("button");
-  previousLevelButton.type = "button";
-  previousLevelButton.textContent = "← Previous level";
-  previousLevelButton.addEventListener("click", () => movement.previousLevel());
-  const nextLevelButton = document.createElement("button");
-  nextLevelButton.type = "button";
-  nextLevelButton.textContent = "Next level →";
-  nextLevelButton.addEventListener("click", () => movement.nextLevel());
+  const createControlLabel = (text: string) => {
+    const span = document.createElement("span");
+    span.className = "control-label";
+    span.textContent = text;
+    return span;
+  };
+
+  const createIcon = (iconClass: string) => {
+    const icon = document.createElement("i");
+    icon.className = `${iconClass} control-icon`;
+    icon.setAttribute("aria-hidden", "true");
+    return icon;
+  };
+
+  const createControlButton = (
+    text: string,
+    onClick: () => void,
+    iconClass: string
+  ) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("aria-label", text);
+    button.appendChild(createIcon(iconClass));
+    button.appendChild(createControlLabel(text));
+    button.addEventListener("click", onClick);
+    return button;
+  };
+
+  const resetButton = createControlButton(
+    "Reset level",
+    () => movement.resetLevel(),
+    "fa-solid fa-rotate-right"
+  );
+  const previousLevelButton = createControlButton(
+    "Previous level",
+    () => movement.previousLevel(),
+    "fa-solid fa-chevron-left"
+  );
+  const nextLevelButton = createControlButton(
+    "Next level",
+    () => movement.nextLevel(),
+    "fa-solid fa-chevron-right"
+  );
+
+  const statsLink = document.createElement("a");
+  statsLink.className = "stats-link";
+  statsLink.setAttribute("aria-label", "Stats");
+  statsLink.setAttribute("role", "button");
+  statsLink.appendChild(createIcon("fa-solid fa-chart-line"));
+  statsLink.appendChild(createControlLabel("Stats"));
+
   controlPanel.appendChild(resetButton);
   controlPanel.appendChild(previousLevelButton);
   controlPanel.appendChild(nextLevelButton);
-  const statsLink = document.createElement("a");
-  statsLink.className = "stats-link";
-  statsLink.textContent = "Stats";
-  statsLink.setAttribute("role", "button");
   controlPanel.appendChild(statsLink);
   document.body.appendChild(controlPanel);
 
