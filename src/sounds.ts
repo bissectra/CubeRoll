@@ -1,16 +1,31 @@
-const AUDIO_CONTEXT =
-  typeof window !== "undefined"
-    ? new (window.AudioContext || (window as any).webkitAudioContext)()
-    : null;
+let audioContext: AudioContext | null = null;
 
-const ensureContext = () => {
-  if (!AUDIO_CONTEXT) {
+const createContext = () => {
+  if (audioContext) {
+    return audioContext;
+  }
+  if (typeof window === "undefined") {
     return null;
   }
-  if (AUDIO_CONTEXT.state === "suspended") {
-    void AUDIO_CONTEXT.resume();
+  const ctx =
+    new (window.AudioContext || (window as any).webkitAudioContext)();
+  audioContext = ctx;
+  return ctx;
+};
+
+const ensureContext = () => {
+  const ctx = createContext();
+  if (!ctx) {
+    return null;
   }
-  return AUDIO_CONTEXT;
+  if (ctx.state === "suspended") {
+    void ctx.resume();
+  }
+  return ctx;
+};
+
+export const unlockAudioContext = () => {
+  ensureContext();
 };
 
 const playTone = (

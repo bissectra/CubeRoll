@@ -17,7 +17,11 @@ import {
   setGridCells,
 } from "./grid-config";
 import { quaternionSlerp, type Quaternion } from "./quaternions";
-import { playBlockedSound, playMoveSound } from "./sounds";
+import {
+  playBlockedSound,
+  playMoveSound,
+  unlockAudioContext,
+} from "./sounds";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -496,6 +500,7 @@ export class MovementManager {
   }
 
   public handleMousePressed() {
+    unlockAudioContext();
     this.startDrag();
   }
 
@@ -524,6 +529,7 @@ export class MovementManager {
   }
 
   public undoLastMove() {
+    unlockAudioContext();
     if (this.animationState) return false;
     const entry = this.moveHistory.pop();
     if (!entry) return false;
