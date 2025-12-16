@@ -19,14 +19,6 @@ const sketch = (p: p5) => {
     p.setAttributes("antialias", true);
   };
 
-  const floorColorRows: FaceColorName[][] = [
-    ["red", "red", "red", "red"],
-    ["orange", "orange", "orange", "orange"],
-    ["green", "green", "green", "green"],
-    ["blue", "blue", "blue", "blue"],
-    ["white", "white", "white", "white"],
-    ["yellow", "yellow", "yellow", "yellow"],
-  ];
   const cubePath = {
     start: { x: 1, y: 1 },
     end: { x: 2, y: 1 },
@@ -40,14 +32,6 @@ const sketch = (p: p5) => {
     p.background(16);
     p.lights();
     p.push();
-
-    floorColorRows.forEach((row, rowIndex) => {
-      row.forEach((color, colIndex) => {
-        const xIndex = colIndex * 2;
-        const yIndex = rowIndex * 2;
-        drawFloor(p, xIndex, yIndex, color);
-      });
-    });
 
     const progress =
       (animationFrame % animationDuration) / animationDuration;
