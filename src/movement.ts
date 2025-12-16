@@ -116,26 +116,23 @@ const getInitialParams = () => {
       ? new URLSearchParams()
       : new URLSearchParams(window.location.search);
   
-  // If level param is present, ignore other params
-  if (params.has("level")) {
-    const levelId = params.get("level");
-    // Only process if level param has a non-empty value
-    if (levelId) {
-      const safeGrid = getDefaultGridSize();
-      setGridCells(safeGrid);
-      const safeSeedValue = getTodaySeedValue();
-      const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
-      
-      ensureLevelOnlyUrl(levelId);
-      
-      return {
-        gridSize: safeGrid,
-        count: safeCount,
-        seedValue: safeSeedValue,
-        seed: hashSeedString(safeSeedValue),
-        levelId,
-      };
-    }
+  // If level param is present with a non-empty value, ignore other params
+  const levelId = params.get("level");
+  if (levelId) {
+    const safeGrid = getDefaultGridSize();
+    setGridCells(safeGrid);
+    const safeSeedValue = getTodaySeedValue();
+    const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
+    
+    ensureLevelOnlyUrl(levelId);
+    
+    return {
+      gridSize: safeGrid,
+      count: safeCount,
+      seedValue: safeSeedValue,
+      seed: hashSeedString(safeSeedValue),
+      levelId,
+    };
   }
   
   const requestedGrid = parseNumberParam(
