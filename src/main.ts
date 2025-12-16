@@ -2,15 +2,12 @@ import "./style.css";
 import p5 from "p5";
 import {
   drawCube,
-  GRID_CELLS,
   GRID_HALF_COUNT,
   GRID_RADIUS,
   GRID_SPACING,
+  GRID_CELLS,
   ORIENTATION_QUATERNIONS,
-  DIRECTIONAL_ORIENTATION_MAPS,
-  FaceOrientationKey,
 } from "./cube-factory";
-import { quaternionSlerp } from "./quaternions";
 
 const sketch = (p: p5) => {
   p.setup = () => {
@@ -20,66 +17,13 @@ const sketch = (p: p5) => {
     p.setAttributes("antialias", true);
   };
 
-  const eastEntries = Object.entries(
-    DIRECTIONAL_ORIENTATION_MAPS.east
-  ) as [FaceOrientationKey, FaceOrientationKey][];
-  const animationDuration = 240;
-  const evenXIndices: number[] = [];
-  for (let xIndex = 0; xIndex < GRID_CELLS - 1; xIndex += 2) {
-    evenXIndices.push(xIndex);
-  }
-  const evenYIndices: number[] = [];
-  for (let yIndex = 0; yIndex < GRID_CELLS; yIndex += 2) {
-    evenYIndices.push(yIndex);
-  }
-  const slots = evenXIndices.flatMap((xIndex) =>
-    evenYIndices.map((yIndex) => ({ xIndex, yIndex }))
-  );
-  const cubeAnimations = eastEntries.map(([startKey, midKey], entryIndex) => ({
-    slot: slots[entryIndex % slots.length],
-    startKey,
-    midKey,
-    endKey:
-      DIRECTIONAL_ORIENTATION_MAPS.south[midKey as FaceOrientationKey] ?? midKey,
-  }));
-  let animationFrame = 0;
-
+  const centerIndex = Math.floor(GRID_CELLS / 2);
   p.draw = () => {
     p.background(16);
     p.lights();
     p.push();
 
-    const cycleDuration = animationDuration * 2;
-    const frameInCycle = animationFrame % cycleDuration;
-    const stage = frameInCycle < animationDuration ? 0 : 1;
-    const stageProgress =
-      (frameInCycle % animationDuration) / animationDuration;
-    const easedProgress = (1 - Math.cos(Math.PI * stageProgress)) / 2;
-
-    cubeAnimations.forEach(({ slot, startKey, midKey, endKey }) => {
-      const isEastStage = stage === 0;
-      const startOrientation = ORIENTATION_QUATERNIONS[
-        isEastStage ? startKey : midKey
-      ];
-      const targetOrientation = ORIENTATION_QUATERNIONS[
-        isEastStage ? midKey : endKey
-      ];
-
-      const currentX = isEastStage
-        ? slot.xIndex + easedProgress
-        : slot.xIndex + 1;
-      const currentY = isEastStage
-        ? slot.yIndex
-        : slot.yIndex + easedProgress;
-      const currentOrientation = quaternionSlerp(
-        startOrientation,
-        targetOrientation,
-        easedProgress
-      );
-      drawCube(p, currentX, currentY, currentOrientation);
-    });
-
-    animationFrame = (animationFrame + 1) % cycleDuration;
+    drawCube(p, centerIndex, centerIndex, ORIENTATION_QUATERNIONS["white:green"]);
 
     drawGrid(p);
     p.pop();
