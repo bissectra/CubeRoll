@@ -633,6 +633,18 @@ export class MovementManager {
     return true;
   }
 
+  public goToSeed(newSeed: string) {
+    const safeSeedValue = sanitizeSeedValue(newSeed);
+    if (safeSeedValue === this.seedValue) {
+      return false;
+    }
+    this.seedValue = safeSeedValue;
+    this.seed = hashSeedString(this.seedValue);
+    ensureUrlParams(this.gridSize, this.count, this.seedValue);
+    this.loadLevelState();
+    return true;
+  }
+
   public canAdvanceLevel() {
     const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
     return this.count < unlockedLimit;

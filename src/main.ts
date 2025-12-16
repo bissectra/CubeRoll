@@ -3,6 +3,7 @@ import p5 from "p5";
 import { MovementManager, type DragState } from "./movement";
 import { drawGrid, drawOverlay } from "./details";
 import { setupAudioUnlock } from "./sounds";
+import { getTodaySeedValue } from "./params";
 
 const statusPanel = document.createElement("div");
 statusPanel.className = "status-panel";
@@ -57,6 +58,12 @@ const sketch = (p: p5) => {
     () => movement.nextLevel(),
     "fa-solid fa-chevron-right"
   );
+  const todaySeedButton = createControlButton(
+    "Today's seed",
+    () => movement.goToSeed(getTodaySeedValue()),
+    "fa-solid fa-sun"
+  );
+  todaySeedButton.classList.add("control-today");
   const bestSolutionButton = createControlButton(
     "Load best solution",
     () => movement.loadBestSolutionHistory(),
@@ -71,7 +78,14 @@ const sketch = (p: p5) => {
   statsLink.appendChild(createIcon("fa-solid fa-chart-line"));
   statsLink.appendChild(createControlLabel("Stats"));
 
-  controlPanel.append(bestSolutionButton, resetButton, previousLevelButton, nextLevelButton, statsLink);
+  controlPanel.append(
+    todaySeedButton,
+    bestSolutionButton,
+    resetButton,
+    previousLevelButton,
+    nextLevelButton,
+    statsLink
+  );
   document.body.appendChild(controlPanel);
 
   const updateStatsLink = () => {
@@ -108,6 +122,8 @@ const sketch = (p: p5) => {
     nextLevelButton.disabled = !canAdvance;
     previousLevelButton.disabled = !movement.canGoBack();
     bestSolutionButton.disabled = !movement.hasBestSolution();
+    const todaySeedValue = getTodaySeedValue();
+    todaySeedButton.disabled = movement.getSeedValue() === todaySeedValue;
   };
 
   p.mousePressed = () => movement.handleMousePressed();

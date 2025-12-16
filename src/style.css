@@ -106,3 +106,11 @@ canvas {
 .control-panel .control-icon {
   font-size: 1.3rem;
 }
+
+.control-panel .control-today {
+  background: linear-gradient(135deg, #4f7dff, #1d46d1);
+}
+
+.control-panel .control-today:hover {
+  box-shadow: 0 10px 32px rgba(40, 110, 255, 0.5);
+}
