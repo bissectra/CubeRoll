@@ -12,6 +12,14 @@ setupAudioUnlock();
 
 const sketch = (p: p5) => {
   const movement = new MovementManager(p);
+  const controlPanel = document.createElement("div");
+  controlPanel.className = "control-panel";
+  const resetButton = document.createElement("button");
+  resetButton.type = "button";
+  resetButton.textContent = "Reset level";
+  resetButton.addEventListener("click", () => movement.resetLevel());
+  controlPanel.appendChild(resetButton);
+  document.body.appendChild(controlPanel);
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);

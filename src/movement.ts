@@ -333,6 +333,10 @@ export class MovementManager {
   private worldToScreen:
     | ((vector: p5.Vector) => p5.Vector)
     | undefined = undefined;
+  private gridSize: number;
+  private count: number;
+  private seedValue: string;
+  private seed: number;
   private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
   private storageKey: string | null = null;
@@ -341,8 +345,16 @@ export class MovementManager {
 
   constructor(private readonly p: p5) {
     this.worldToScreen = (p as any).worldToScreen?.bind(p);
-    const { gridSize, count, seedValue, seed } = getInitialParams();
-    this.storageKey = buildStorageKey(gridSize, count, seedValue);
+    const params = getInitialParams();
+    this.gridSize = params.gridSize;
+    this.count = params.count;
+    this.seedValue = params.seedValue;
+    this.seed = params.seed;
+    this.storageKey = buildStorageKey(
+      this.gridSize,
+      this.count,
+      this.seedValue
+    );
     const storedState = this.storageKey
       ? loadPersistedState(this.storageKey)
       : null;
@@ -351,7 +363,7 @@ export class MovementManager {
       this.goals = storedState.goals;
       this.moveHistory = storedState.moveHistory;
     } else {
-      const level = generateLevel(gridSize, count, seed);
+      const level = generateLevel(this.gridSize, this.count, this.seed);
       this.cubes = level.cubes;
       this.goals = level.goals;
       this.moveHistory = [];
@@ -430,6 +442,16 @@ export class MovementManager {
     return null;
   }
 
+  private clearPersistedState() {
+    if (!this.storageKey) {
+      return;
+    }
+    if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+      return;
+    }
+    window.localStorage.removeItem(this.storageKey);
+  }
+
   private persistState() {
     if (!this.storageKey) {
       return;
@@ -477,6 +499,29 @@ export class MovementManager {
       this.bestSolution = candidate;
       saveBestSolution(key, candidate);
     }
+  }
+
+  public resetLevel() {
+    if (this.animationState) {
+      this.animationState = null;
+    }
+    if (!this.storageKey) {
+      return;
+    }
+    this.clearPersistedState();
+    const level = generateLevel(this.gridSize, this.count, this.seed);
+    this.cubes = level.cubes;
+    this.goals = level.goals;
+    this.moveHistory = [];
+    this.dragTargetId = null;
+    this.dragState = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+    };
+    this.persistState();
   }
 
   private isInsideGrid(position: CubePosition) {
