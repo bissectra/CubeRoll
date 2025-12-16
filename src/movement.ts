@@ -534,12 +534,25 @@ export class MovementManager {
     this.loadLevelState();
   }
 
+  public previousLevel() {
+    if (this.count <= 1) {
+      return;
+    }
+    this.count = Math.max(1, this.count - 1);
+    ensureUrlParams(this.gridSize, this.count, this.seedValue);
+    this.loadLevelState();
+  }
+
   public hasBestSolution() {
     return this.bestSolution !== null;
   }
 
   public canAdvanceLevel() {
     return this.count < this.gridSize * this.gridSize;
+  }
+
+  public canGoBack() {
+    return this.count > 1;
   }
 
   private isInsideGrid(position: CubePosition) {

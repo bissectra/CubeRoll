@@ -18,11 +18,16 @@ const sketch = (p: p5) => {
   resetButton.type = "button";
   resetButton.textContent = "Reset level";
   resetButton.addEventListener("click", () => movement.resetLevel());
+  const previousLevelButton = document.createElement("button");
+  previousLevelButton.type = "button";
+  previousLevelButton.textContent = "← Previous level";
+  previousLevelButton.addEventListener("click", () => movement.previousLevel());
   const nextLevelButton = document.createElement("button");
   nextLevelButton.type = "button";
   nextLevelButton.textContent = "Next level →";
   nextLevelButton.addEventListener("click", () => movement.nextLevel());
   controlPanel.appendChild(resetButton);
+  controlPanel.appendChild(previousLevelButton);
   controlPanel.appendChild(nextLevelButton);
   document.body.appendChild(controlPanel);
 
@@ -47,10 +52,12 @@ const sketch = (p: p5) => {
     const statusLine = movement.isAnimating() ? "Rolling..." : "Drag a cube";
     const moveLine = `Moves: ${movement.getMoveCount()}`;
     statusPanel.innerHTML = `<span>${statusLine}</span><span>${moveLine}</span>`;
-    nextLevelButton.style.display =
-      movement.hasBestSolution() && movement.canAdvanceLevel()
-        ? "inline-flex"
-        : "none";
+    const showNavigation =
+      movement.hasBestSolution() && movement.canAdvanceLevel();
+    nextLevelButton.style.display = showNavigation ? "inline-flex" : "none";
+    previousLevelButton.style.display = movement.canGoBack()
+      ? "inline-flex"
+      : "none";
   };
 
   p.mousePressed = () => movement.handleMousePressed();
