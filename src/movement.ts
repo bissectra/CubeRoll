@@ -104,7 +104,9 @@ const getInitialParams = () => {
   ensureUrlParams(safeGrid, safeCount, requestedSeedValue);
 
   return {
+    gridSize: safeGrid,
     count: safeCount,
+    seedValue: requestedSeedValue,
     seed: hashSeedString(requestedSeedValue),
   };
 };
@@ -154,6 +156,27 @@ type AnimationState = {
   toOrientation: FaceOrientationKey;
 };
 
+type Goal = {
+  position: CubePosition;
+  color: FaceColorName;
+};
+
+type MoveHistoryEntry = {
+  cubeId: number;
+  direction: Direction;
+};
+
+type PersistedState = {
+  cubes: CubeState[];
+  goals: Goal[];
+  moveHistory: MoveHistoryEntry[];
+};
+
+type BestSolution = {
+  completedAt: number;
+  moveHistory: MoveHistoryEntry[];
+};
+
 const mulberry32 = (seed: number) => {
   let t = seed >>> 0;
   return () => {
@@ -165,14 +188,64 @@ const mulberry32 = (seed: number) => {
   };
 };
 
-type Goal = {
-  position: CubePosition;
-  color: FaceColorName;
+const buildStorageKey = (
+  gridSize: number,
+  count: number,
+  seedValue: string
+) => `${gridSize}:${count}:${seedValue}`;
+
+const buildBestSolutionKey = (baseKey: string) => `${baseKey}:bestSolution`;
+
+const loadPersistedState = (key: string): PersistedState | null => {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as PersistedState;
+  } catch {
+    return null;
+  }
 };
 
-type MoveHistoryEntry = {
-  cubeId: number;
-  direction: Direction;
+const savePersistedState = (key: string, state: PersistedState) => {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    // best effort only
+  }
+};
+
+const loadBestSolution = (key: string): BestSolution | null => {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as BestSolution;
+  } catch {
+    return null;
+  }
+};
+
+const saveBestSolution = (key: string, solution: BestSolution | null) => {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, JSON.stringify(solution));
+  } catch {
+    // best effort only
+  }
 };
 
 const generateLevel = (
@@ -247,14 +320,35 @@ export class MovementManager {
     | undefined = undefined;
   private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
+  private storageKey: string | null = null;
+  private bestSolution: BestSolution | null = null;
+  private bestSolutionKey: string | null = null;
 
   constructor(private readonly p: p5) {
     this.worldToScreen = (p as any).worldToScreen?.bind(p);
-    const { count, seed } = getInitialParams();
-    const gridCells = getGridCells();
-    const level = generateLevel(gridCells, count, seed);
-    this.cubes = level.cubes;
-    this.goals = level.goals;
+    const { gridSize, count, seedValue, seed } = getInitialParams();
+    this.storageKey = buildStorageKey(gridSize, count, seedValue);
+    const storedState = this.storageKey
+      ? loadPersistedState(this.storageKey)
+      : null;
+    if (storedState) {
+      this.cubes = storedState.cubes;
+      this.goals = storedState.goals;
+      this.moveHistory = storedState.moveHistory;
+    } else {
+      const level = generateLevel(gridSize, count, seed);
+      this.cubes = level.cubes;
+      this.goals = level.goals;
+      this.moveHistory = [];
+    }
+    if (this.storageKey) {
+      this.bestSolutionKey = buildBestSolutionKey(this.storageKey);
+      this.bestSolution = loadBestSolution(this.bestSolutionKey);
+      if (this.bestSolution === null && this.bestSolutionKey) {
+        saveBestSolution(this.bestSolutionKey, null);
+      }
+    }
+    this.persistState();
   }
 
   private getCubeWorldCenter(position: CubePosition) {
@@ -303,6 +397,46 @@ export class MovementManager {
   private getCubeById(id: number | null) {
     if (id === null) return null;
     return this.cubes.find((cube) => cube.id === id) ?? null;
+  }
+
+  private persistState() {
+    if (!this.storageKey) {
+      return;
+    }
+    savePersistedState(this.storageKey, {
+      cubes: this.cubes,
+      goals: this.goals,
+      moveHistory: this.moveHistory,
+    });
+  }
+
+  private checkGoalsComplete() {
+    const goalSet = new Set(
+      this.goals.map((goal) => `${goal.position.x},${goal.position.y}`)
+    );
+    const cubeSet = new Set(
+      this.cubes.map((cube) => `${cube.position.x},${cube.position.y}`)
+    );
+    return [...goalSet.values()].every((position) => cubeSet.has(position));
+  }
+
+  private tryUpdateBestSolution() {
+    if (!this.storageKey || !this.bestSolutionKey) {
+      return;
+    }
+    if (!this.checkGoalsComplete()) {
+      return;
+    }
+    const key = this.bestSolutionKey;
+    const candidate: BestSolution = {
+      completedAt: Date.now(),
+      moveHistory: [...this.moveHistory],
+    };
+    const currentBest = this.bestSolution;
+    if (!currentBest || candidate.moveHistory.length < currentBest.moveHistory.length) {
+      this.bestSolution = candidate;
+      saveBestSolution(key, candidate);
+    }
   }
 
   private isInsideGrid(position: CubePosition) {
@@ -432,6 +566,8 @@ export class MovementManager {
         animatedCube.orientation = currentAnimation.toOrientation;
       }
       this.animationState = null;
+      this.persistState();
+      this.tryUpdateBestSolution();
       return null;
     }
 
