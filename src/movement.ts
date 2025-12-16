@@ -416,7 +416,9 @@ export class MovementManager {
     this.seedValue = params.seedValue;
     this.seed = params.seed;
     this.levelId = params.levelId;
-    this.loadLevelState();
+    // Fire-and-forget async initialization
+    // The p5 draw loop won't start until the first frame, giving time for this to complete
+    void this.loadLevelState();
   }
 
   private resetDragState() {
@@ -438,16 +440,19 @@ export class MovementManager {
     }
   }
 
+  private fallbackToProceduralGeneration() {
+    this.levelId = null;
+    this.currentLevelData = null;
+    ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+  }
+
   private async loadLevelState(useStored = true) {
     // If we're in curated level mode, load the level file
     if (this.levelId) {
       const levelData = await loadLevel(this.levelId);
       if (!levelData) {
         console.error(`Failed to load level: ${this.levelId}`);
-        // Fall back to procedural generation
-        this.levelId = null;
-        this.currentLevelData = null;
-        ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+        this.fallbackToProceduralGeneration();
         // Continue with procedural generation below
       } else {
         // Successfully loaded curated level
@@ -492,10 +497,7 @@ export class MovementManager {
             this.moveHistory = [];
           } catch (error) {
             console.error(`Invalid level data for ${this.levelId}:`, error);
-            // Fall back to procedural generation
-            this.levelId = null;
-            this.currentLevelData = null;
-            ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+            this.fallbackToProceduralGeneration();
             // Continue with procedural generation below
           }
         }

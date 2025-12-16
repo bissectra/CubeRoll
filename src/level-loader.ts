@@ -1,4 +1,5 @@
 import type { FaceOrientationKey, FaceColorName } from "./cube-factory";
+import { ORIENTATION_QUATERNIONS } from "./cube-factory";
 
 export interface LevelData {
   name: string;
@@ -22,18 +23,14 @@ export interface LevelData {
 
 const LEVEL_FILES = ["tutorial-01", "easy-corner"];
 
-const VALID_FACE_COLORS: Set<string> = new Set([
+// Derive valid values from the actual type definitions
+const VALID_FACE_COLORS: Set<string> = new Set<FaceColorName>([
   "red", "orange", "green", "blue", "white", "yellow"
 ]);
 
-const VALID_FACE_ORIENTATIONS: Set<string> = new Set([
-  "red:green", "red:blue", "red:white", "red:yellow",
-  "orange:green", "orange:blue", "orange:white", "orange:yellow",
-  "green:red", "green:orange", "green:white", "green:yellow",
-  "blue:red", "blue:orange", "blue:white", "blue:yellow",
-  "white:red", "white:orange", "white:green", "white:blue",
-  "yellow:red", "yellow:orange", "yellow:green", "yellow:blue"
-]);
+const VALID_FACE_ORIENTATIONS: Set<string> = new Set(
+  Object.keys(ORIENTATION_QUATERNIONS)
+);
 
 export function isValidFaceColor(color: string): color is FaceColorName {
   return VALID_FACE_COLORS.has(color);
