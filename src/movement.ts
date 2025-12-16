@@ -320,7 +320,7 @@ const generateLevel = (
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export class MovementManager {
-  private cubes: CubeState[];
+  private cubes: CubeState[] = [];
   private animationState: AnimationState | null = null;
   private dragTargetId: number | null = null;
   private dragState: DragState = {
