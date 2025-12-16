@@ -890,21 +890,14 @@ export class MovementManager {
     return this.seedValue;
   }
 
-  public undoLastMove() {
-    unlockAudioContext();
+  public moveOppositeOfLastEntry() {
     if (this.animationState) return false;
-    const entry = this.moveHistory.pop();
+    const entry = this.moveHistory[this.moveHistory.length - 1];
     if (!entry) return false;
     const cube = this.cubes.find((c) => c.id === entry.cubeId);
     if (!cube) return false;
     const backwards = oppositeDirection[entry.direction];
-    const success = this.scheduleMove(cube, backwards, {
-      recordHistory: false,
-    });
-    if (!success) {
-      this.moveHistory.push(entry);
-    }
-    return success;
+    return this.scheduleMove(cube, backwards);
   }
 
   public getMoveCount() {

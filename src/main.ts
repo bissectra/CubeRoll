@@ -113,9 +113,16 @@ const sketch = (p: p5) => {
   p.mousePressed = () => movement.handleMousePressed();
   p.mouseDragged = () => movement.handleMouseDragged();
   p.mouseReleased = () => movement.handleMouseReleased();
+  let undoKeyHeld = false;
   p.keyPressed = () => {
+    if (p.key.toLowerCase() === "u" && !undoKeyHeld) {
+      undoKeyHeld = true;
+      movement.moveOppositeOfLastEntry();
+    }
+  };
+  p.keyReleased = () => {
     if (p.key.toLowerCase() === "u") {
-      movement.undoLastMove();
+      undoKeyHeld = false;
     }
   };
 
