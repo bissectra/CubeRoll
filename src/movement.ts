@@ -24,7 +24,7 @@ import {
   unlockAudioContext,
 } from "./sounds";
 import { sanitizeSeedValue, getTodaySeedValue, sanitizeLevelId } from "./params";
-import { loadLevel, getLevelIds, type LevelData } from "./level-loader";
+import { loadLevel, getLevelIds, type LevelData, isValidFaceColor, isValidFaceOrientation } from "./level-loader";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -467,17 +467,38 @@ export class MovementManager {
           this.goals = storedState.goals;
           this.moveHistory = storedState.moveHistory;
         } else {
-          // Convert level data to game state
-          this.cubes = levelData.cubes.map(cube => ({
-            id: cube.id,
-            position: cube.position,
-            orientation: cube.orientation as FaceOrientationKey,
-          }));
-          this.goals = levelData.goals.map(goal => ({
-            position: goal.position,
-            color: goal.color as FaceColorName,
-          }));
-          this.moveHistory = [];
+          // Convert level data to game state with validation
+          try {
+            this.cubes = levelData.cubes.map(cube => {
+              if (!isValidFaceOrientation(cube.orientation)) {
+                throw new Error(`Invalid orientation: ${cube.orientation}`);
+              }
+              return {
+                id: cube.id,
+                position: cube.position,
+                orientation: cube.orientation,
+              };
+            });
+            this.goals = levelData.goals.map(goal => {
+              if (!isValidFaceColor(goal.color)) {
+                throw new Error(`Invalid goal color: ${goal.color}`);
+              }
+              return {
+                position: goal.position,
+                color: goal.color,
+              };
+            });
+            this.moveHistory = [];
+          } catch (error) {
+            console.error(`Invalid level data for ${this.levelId}:`, error);
+            // Fall back to procedural generation
+            this.levelId = null;
+            this.currentLevelData = null;
+            ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+            // Recursively call to continue with procedural mode
+            await this.loadLevelState(useStored);
+            return;
+          }
         }
         
         this.bestSolution = this.bestSolutionKey

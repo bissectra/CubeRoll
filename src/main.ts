@@ -4,6 +4,7 @@ import { MovementManager, type DragState } from "./movement";
 import { drawGrid, drawOverlay } from "./details";
 import { setupAudioUnlock } from "./sounds";
 import { getTodaySeedValue } from "./params";
+import { getLevelIds } from "./level-loader";
 
 const statusPanel = document.createElement("div");
 statusPanel.className = "status-panel";
@@ -76,7 +77,7 @@ const sketch = (p: p5) => {
     "Curated Levels",
     async () => {
       // Load the first curated level
-      const levelIds = await import("./level-loader").then(m => m.getLevelIds());
+      const levelIds = getLevelIds();
       if (levelIds.length > 0) {
         await movement.switchToCuratedLevel(levelIds[0]);
       }

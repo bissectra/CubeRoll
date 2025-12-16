@@ -1,3 +1,5 @@
+import type { FaceOrientationKey, FaceColorName } from "./cube-factory";
+
 export interface LevelData {
   name: string;
   description: string;
@@ -19,6 +21,27 @@ export interface LevelData {
 }
 
 const LEVEL_FILES = ["tutorial-01", "easy-corner"];
+
+const VALID_FACE_COLORS: Set<string> = new Set([
+  "red", "orange", "green", "blue", "white", "yellow"
+]);
+
+const VALID_FACE_ORIENTATIONS: Set<string> = new Set([
+  "red:green", "red:blue", "red:white", "red:yellow",
+  "orange:green", "orange:blue", "orange:white", "orange:yellow",
+  "green:red", "green:orange", "green:white", "green:yellow",
+  "blue:red", "blue:orange", "blue:white", "blue:yellow",
+  "white:red", "white:orange", "white:green", "white:blue",
+  "yellow:red", "yellow:orange", "yellow:green", "yellow:blue"
+]);
+
+export function isValidFaceColor(color: string): color is FaceColorName {
+  return VALID_FACE_COLORS.has(color);
+}
+
+export function isValidFaceOrientation(orientation: string): orientation is FaceOrientationKey {
+  return VALID_FACE_ORIENTATIONS.has(orientation);
+}
 
 let cachedLevels: Map<string, LevelData> | null = null;
 
