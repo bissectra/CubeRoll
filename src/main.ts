@@ -45,31 +45,45 @@ const sketch = (p: p5) => {
 
   const resetButton = createControlButton(
     "Reset level",
-    () => movement.resetLevel(),
+    () => void movement.resetLevel(),
     "fa-solid fa-rotate-right"
   );
   const previousLevelButton = createControlButton(
     "Previous level",
-    () => movement.previousLevel(),
+    () => void movement.previousLevel(),
     "fa-solid fa-chevron-left"
   );
   const nextLevelButton = createControlButton(
     "Next level",
-    () => movement.nextLevel(),
+    () => void movement.nextLevel(),
     "fa-solid fa-chevron-right"
   );
   const todaySeedButton = createControlButton(
     "Today's seed",
-    () => movement.goToSeed(getTodaySeedValue()),
+    () => void movement.goToSeed(getTodaySeedValue()),
     "fa-solid fa-sun"
   );
   todaySeedButton.classList.add("control-today");
   const bestSolutionButton = createControlButton(
     "Load best solution",
-    () => movement.loadBestSolutionHistory(),
+    () => void movement.loadBestSolutionHistory(),
     "fa-solid fa-star"
   );
   bestSolutionButton.classList.add("control-best");
+
+  // Add a button to browse curated levels
+  const curatedLevelsButton = createControlButton(
+    "Curated Levels",
+    async () => {
+      // Load the first curated level
+      const levelIds = await import("./level-loader").then(m => m.getLevelIds());
+      if (levelIds.length > 0) {
+        await movement.switchToCuratedLevel(levelIds[0]);
+      }
+    },
+    "fa-solid fa-book"
+  );
+  curatedLevelsButton.classList.add("control-curated");
 
   const statsLink = document.createElement("a");
   statsLink.className = "stats-link";
@@ -79,6 +93,7 @@ const sketch = (p: p5) => {
   statsLink.appendChild(createControlLabel("Stats"));
 
   controlPanel.append(
+    curatedLevelsButton,
     todaySeedButton,
     bestSolutionButton,
     resetButton,

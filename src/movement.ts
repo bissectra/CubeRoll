@@ -23,7 +23,8 @@ import {
   playLevelCompleteSound,
   unlockAudioContext,
 } from "./sounds";
-import { sanitizeSeedValue, getTodaySeedValue } from "./params";
+import { sanitizeSeedValue, getTodaySeedValue, sanitizeLevelId } from "./params";
+import { loadLevel, getLevelIds, type LevelData } from "./level-loader";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -54,7 +55,7 @@ const hashSeedString = (value: string) => {
   return hash >>> 0;
 };
 
-const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string) => {
+const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string, levelId: string | null = null) => {
   if (typeof window === "undefined") {
     return;
   }
@@ -63,12 +64,17 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   const currentParams = new URLSearchParams(url.search);
 
   const orderedParams = new URLSearchParams();
-  orderedParams.set("m", String(gridSize));
-  orderedParams.set("n", String(countParam));
-  orderedParams.set("seed", seedValue);
+  
+  if (levelId) {
+    orderedParams.set("level", levelId);
+  } else {
+    orderedParams.set("m", String(gridSize));
+    orderedParams.set("n", String(countParam));
+    orderedParams.set("seed", seedValue);
+  }
 
   currentParams.forEach((value, key) => {
-    if (["m", "n", "seed"].includes(key)) return;
+    if (["m", "n", "seed", "level"].includes(key)) return;
     orderedParams.set(key, value);
   });
 
@@ -84,6 +90,22 @@ const getInitialParams = () => {
     typeof window === "undefined"
       ? new URLSearchParams()
       : new URLSearchParams(window.location.search);
+  
+  // Check if we're loading a curated level
+  const requestedLevelId = sanitizeLevelId(params.get("level"));
+  
+  if (requestedLevelId) {
+    // Curated level mode - gridSize, count, and seed will be determined by the level file
+    return {
+      gridSize: getDefaultGridSize(), // Will be updated after loading
+      count: DEFAULT_INITIAL_CUBE_COUNT, // Will be updated after loading
+      seedValue: getTodaySeedValue(), // Not used for curated levels
+      seed: 0, // Not used for curated levels
+      levelId: requestedLevelId,
+    };
+  }
+  
+  // Procedural generation mode
   const requestedGrid = parseNumberParam(
     params.get("m"),
     getDefaultGridSize()
@@ -109,13 +131,14 @@ const getInitialParams = () => {
     Math.max(0, requestedCount)
   );
 
-  ensureUrlParams(safeGrid, safeCount, safeSeedValue);
+  ensureUrlParams(safeGrid, safeCount, safeSeedValue, null);
 
   return {
     gridSize: safeGrid,
     count: safeCount,
     seedValue: safeSeedValue,
     seed: hashSeedString(safeSeedValue),
+    levelId: null,
   };
 };
 
@@ -378,6 +401,8 @@ export class MovementManager {
   private count: number;
   private seedValue: string;
   private seed: number;
+  private levelId: string | null = null;
+  private currentLevelData: LevelData | null = null;
   private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
   private storageKey: string | null = null;
@@ -390,6 +415,7 @@ export class MovementManager {
     this.count = params.count;
     this.seedValue = params.seedValue;
     this.seed = params.seed;
+    this.levelId = params.levelId;
     this.loadLevelState();
   }
 
@@ -412,8 +438,62 @@ export class MovementManager {
     }
   }
 
-  private loadLevelState(useStored = true) {
+  private async loadLevelState(useStored = true) {
+    // If we're in curated level mode, load the level file
+    if (this.levelId) {
+      const levelData = await loadLevel(this.levelId);
+      if (!levelData) {
+        console.error(`Failed to load level: ${this.levelId}`);
+        // Fall back to procedural generation
+        this.levelId = null;
+        this.currentLevelData = null;
+        ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+      } else {
+        // Successfully loaded curated level
+        this.currentLevelData = levelData;
+        this.gridSize = levelData.gridSize;
+        this.count = levelData.cubes.length;
+        setGridCells(this.gridSize);
+        
+        // Build storage key for curated level
+        this.storageKey = `curated-${this.levelId}`;
+        this.bestSolutionKey = buildBestSolutionKey(this.storageKey);
+        
+        const storedState =
+          useStored && this.storageKey ? loadPersistedState(this.storageKey) : null;
+        
+        if (storedState) {
+          this.cubes = storedState.cubes;
+          this.goals = storedState.goals;
+          this.moveHistory = storedState.moveHistory;
+        } else {
+          // Convert level data to game state
+          this.cubes = levelData.cubes.map(cube => ({
+            id: cube.id,
+            position: cube.position,
+            orientation: cube.orientation as FaceOrientationKey,
+          }));
+          this.goals = levelData.goals.map(goal => ({
+            position: goal.position,
+            color: goal.color as FaceColorName,
+          }));
+          this.moveHistory = [];
+        }
+        
+        this.bestSolution = this.bestSolutionKey
+          ? loadBestSolution(this.bestSolutionKey)
+          : null;
+        this.resetDragState();
+        this.persistState();
+        
+        ensureUrlParams(this.gridSize, this.count, this.seedValue, this.levelId);
+        return;
+      }
+    }
+    
+    // Procedural generation mode
     this.ensureCountWithinUnlockedRange();
+    this.currentLevelData = null;
     this.storageKey = buildStorageKey(
       this.gridSize,
       this.count,
@@ -572,29 +652,53 @@ export class MovementManager {
     }
   }
 
-  public resetLevel() {
+  public async resetLevel() {
     this.clearPersistedState();
-    this.loadLevelState(false);
+    await this.loadLevelState(false);
   }
 
-  public nextLevel() {
+  public async nextLevel() {
+    if (this.levelId) {
+      // Navigate to next curated level
+      const levelIds = getLevelIds();
+      const currentIndex = levelIds.indexOf(this.levelId);
+      if (currentIndex >= 0 && currentIndex < levelIds.length - 1) {
+        this.levelId = levelIds[currentIndex + 1];
+        await this.loadLevelState();
+      }
+      return;
+    }
+    
+    // Procedural generation mode
     const maxCells = this.gridSize * this.gridSize;
     const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
     if (this.count >= maxCells || this.count >= unlockedLimit) {
       return;
     }
     this.count = Math.min(maxCells, unlockedLimit, this.count + 1);
-    ensureUrlParams(this.gridSize, this.count, this.seedValue);
-    this.loadLevelState();
+    ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+    await this.loadLevelState();
   }
 
-  public previousLevel() {
+  public async previousLevel() {
+    if (this.levelId) {
+      // Navigate to previous curated level
+      const levelIds = getLevelIds();
+      const currentIndex = levelIds.indexOf(this.levelId);
+      if (currentIndex > 0) {
+        this.levelId = levelIds[currentIndex - 1];
+        await this.loadLevelState();
+      }
+      return;
+    }
+    
+    // Procedural generation mode
     if (this.count <= 1) {
       return;
     }
     this.count = Math.max(1, this.count - 1);
-    ensureUrlParams(this.gridSize, this.count, this.seedValue);
-    this.loadLevelState();
+    ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+    await this.loadLevelState();
   }
 
   public hasBestSolution() {
@@ -620,12 +724,12 @@ export class MovementManager {
     return true;
   }
 
-  public loadBestSolutionHistory() {
+  public async loadBestSolutionHistory() {
     const solution = this.bestSolution;
     if (!solution) {
       return false;
     }
-    this.loadLevelState(false);
+    await this.loadLevelState(false);
     this.moveHistory = [];
     for (const entry of solution.moveHistory) {
       this.applyMoveWithoutAnimation(entry);
@@ -635,24 +739,37 @@ export class MovementManager {
     return true;
   }
 
-  public goToSeed(newSeed: string) {
+  public async goToSeed(newSeed: string) {
     const safeSeedValue = sanitizeSeedValue(newSeed);
     if (safeSeedValue === this.seedValue) {
       return false;
     }
+    // Switch to procedural mode when changing seed
+    this.levelId = null;
+    this.currentLevelData = null;
     this.seedValue = safeSeedValue;
     this.seed = hashSeedString(this.seedValue);
-    ensureUrlParams(this.gridSize, this.count, this.seedValue);
-    this.loadLevelState();
+    ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+    await this.loadLevelState();
     return true;
   }
 
   public canAdvanceLevel() {
+    if (this.levelId) {
+      const levelIds = getLevelIds();
+      const currentIndex = levelIds.indexOf(this.levelId);
+      return currentIndex >= 0 && currentIndex < levelIds.length - 1;
+    }
     const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
     return this.count < unlockedLimit;
   }
 
   public canGoBack() {
+    if (this.levelId) {
+      const levelIds = getLevelIds();
+      const currentIndex = levelIds.indexOf(this.levelId);
+      return currentIndex > 0;
+    }
     return this.count > 1;
   }
 
@@ -937,5 +1054,38 @@ export class MovementManager {
       }
     }
     return true;
+  }
+  
+  public getCurrentLevelInfo() {
+    if (this.levelId && this.currentLevelData) {
+      return {
+        isCurated: true,
+        levelId: this.levelId,
+        name: this.currentLevelData.name,
+        description: this.currentLevelData.description,
+        difficulty: this.currentLevelData.difficulty,
+        parMoves: this.currentLevelData.parMoves,
+        author: this.currentLevelData.author,
+      };
+    }
+    return {
+      isCurated: false,
+      levelId: null,
+      gridSize: this.gridSize,
+      count: this.count,
+      seedValue: this.seedValue,
+    };
+  }
+  
+  public async switchToCuratedLevel(levelId: string) {
+    this.levelId = levelId;
+    await this.loadLevelState();
+  }
+  
+  public async switchToProceduralMode() {
+    this.levelId = null;
+    this.currentLevelData = null;
+    ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+    await this.loadLevelState();
   }
 }
