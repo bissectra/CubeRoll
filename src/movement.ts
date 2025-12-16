@@ -485,7 +485,6 @@ export class MovementManager {
 
     this.p.push();
     this.p.noStroke();
-    // black semi-transparent fill
     this.p.fill(0, 150);
     this.p.ellipse(cellCenterX, cellCenterY, GRID_SPACING * 0.3);
     this.p.pop();
