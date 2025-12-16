@@ -5,7 +5,6 @@ export const GRID_CELLS = 11;
 export const GRID_SPACING = 60;
 export const GRID_HALF_COUNT = GRID_CELLS / 2;
 export const GRID_RADIUS = GRID_HALF_COUNT * GRID_SPACING;
-export const AXIS_LENGTH = GRID_RADIUS + GRID_SPACING;
 
 export type FaceColorName = "red" | "orange" | "green" | "blue" | "white" | "yellow";
 
@@ -196,13 +195,117 @@ const ORIENTATION_QUATERNIONS: Record<FaceOrientationKey, Quaternion> = {
   },
 };
 
-const CUBE_SYMMETRY_KEYS = Object.keys(ORIENTATION_QUATERNIONS).sort((a, b) =>
-  a.localeCompare(b)
-) as FaceOrientationKey[];
+export type Direction = "north" | "south" | "east" | "west";
 
-export const CUBE_SYMMETRY_QUATERNIONS = CUBE_SYMMETRY_KEYS.map(
-  (key) => ORIENTATION_QUATERNIONS[key]
-);
+export const DIRECTIONAL_ORIENTATION_MAPS: Record<
+  Direction,
+  Record<FaceOrientationKey, FaceOrientationKey>
+> = {
+  east: {
+    "green:red": "yellow:red",
+    "blue:orange": "yellow:orange",
+    "red:blue": "yellow:blue",
+    "orange:green": "yellow:green",
+    "blue:red": "white:red",
+    "green:orange": "white:orange",
+    "red:green": "white:green",
+    "orange:blue": "white:blue",
+    "blue:white": "orange:white",
+    "green:white": "red:white",
+    "red:white": "blue:white",
+    "orange:white": "green:white",
+    "green:yellow": "orange:yellow",
+    "blue:yellow": "red:yellow",
+    "red:yellow": "green:yellow",
+    "orange:yellow": "blue:yellow",
+    "white:green": "orange:green",
+    "white:blue": "red:blue",
+    "white:red": "green:red",
+    "white:orange": "blue:orange",
+    "yellow:blue": "orange:blue",
+    "yellow:green": "red:green",
+    "yellow:red": "blue:red",
+    "yellow:orange": "green:orange",
+  },
+  west: {
+    "green:red": "white:red",
+    "blue:orange": "white:orange",
+    "red:blue": "white:blue",
+    "orange:green": "white:green",
+    "blue:red": "yellow:red",
+    "green:orange": "yellow:orange",
+    "red:green": "yellow:green",
+    "orange:blue": "yellow:blue",
+    "blue:white": "red:white",
+    "green:white": "orange:white",
+    "red:white": "green:white",
+    "orange:white": "blue:white",
+    "green:yellow": "red:yellow",
+    "blue:yellow": "orange:yellow",
+    "red:yellow": "blue:yellow",
+    "orange:yellow": "green:yellow",
+    "white:green": "red:green",
+    "white:blue": "orange:blue",
+    "white:red": "blue:red",
+    "white:orange": "green:orange",
+    "yellow:blue": "red:blue",
+    "yellow:green": "orange:green",
+    "yellow:red": "green:red",
+    "yellow:orange": "blue:orange",
+  },
+  south: {
+    "green:red": "red:blue",
+    "blue:orange": "orange:green",
+    "red:blue": "blue:orange",
+    "orange:green": "green:red",
+    "blue:red": "red:green",
+    "green:orange": "orange:blue",
+    "red:green": "green:orange",
+    "orange:blue": "blue:red",
+    "blue:white": "white:green",
+    "green:white": "white:blue",
+    "red:white": "white:orange",
+    "orange:white": "white:red",
+    "green:yellow": "yellow:blue",
+    "blue:yellow": "yellow:green",
+    "red:yellow": "yellow:orange",
+    "orange:yellow": "yellow:red",
+    "white:green": "green:yellow",
+    "white:blue": "blue:yellow",
+    "white:red": "red:yellow",
+    "white:orange": "orange:yellow",
+    "yellow:blue": "blue:white",
+    "yellow:green": "green:white",
+    "yellow:red": "red:white",
+    "yellow:orange": "orange:white",
+  },
+  north: {
+    "green:red": "orange:green",
+    "blue:orange": "red:blue",
+    "red:blue": "green:red",
+    "orange:green": "blue:orange",
+    "blue:red": "orange:blue",
+    "green:orange": "red:green",
+    "red:green": "blue:red",
+    "orange:blue": "green:orange",
+    "blue:white": "yellow:blue",
+    "green:white": "yellow:green",
+    "red:white": "yellow:red",
+    "orange:white": "yellow:orange",
+    "green:yellow": "white:green",
+    "blue:yellow": "white:blue",
+    "red:yellow": "white:red",
+    "orange:yellow": "white:orange",
+    "white:green": "blue:white",
+    "white:blue": "green:white",
+    "white:red": "orange:white",
+    "white:orange": "red:white",
+    "yellow:blue": "green:yellow",
+    "yellow:green": "blue:yellow",
+    "yellow:red": "orange:yellow",
+    "yellow:orange": "red:yellow",
+  },
+};
 
 const cubeFaceDefinitions: {
   signs: [number, number, number][];
