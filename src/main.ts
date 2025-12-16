@@ -48,6 +48,19 @@ const sketch = (p: p5) => {
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
   };
+
+  p.doubleClicked = () => {
+    movement.undoLastMove();
+    return false;
+  };
+
+  p.touchStarted = () => {
+    if (p.touches.length >= 2) {
+      movement.undoLastMove();
+      return false;
+    }
+    return true;
+  };
 };
 
 new p5(sketch);
