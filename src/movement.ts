@@ -124,6 +124,11 @@ const oppositeDirection: Record<Direction, Direction> = {
   west: "east",
 };
 
+type HistoryRemoval = {
+  entry: MoveHistoryEntry;
+  index: number;
+};
+
 type CubePosition = { x: number; y: number };
 
 export type DragState = {
@@ -164,6 +169,11 @@ type Goal = {
 type MoveHistoryEntry = {
   cubeId: number;
   direction: Direction;
+};
+
+type MoveOptions = {
+  recordHistory?: boolean;
+  skipOppositeCheck?: boolean;
 };
 
 type PersistedState = {
@@ -399,6 +409,25 @@ export class MovementManager {
     return this.cubes.find((cube) => cube.id === id) ?? null;
   }
 
+  private removeOppositeHistoryEntry(
+    cubeId: number,
+    direction: Direction
+  ): HistoryRemoval | null {
+    const lastIndex = this.moveHistory.length - 1;
+    if (lastIndex < 0) {
+      return null;
+    }
+    const entry = this.moveHistory[lastIndex];
+    if (entry.cubeId !== cubeId) {
+      return null;
+    }
+    if (oppositeDirection[entry.direction] === direction) {
+      this.moveHistory.pop();
+      return { entry, index: lastIndex };
+    }
+    return null;
+  }
+
   private persistState() {
     if (!this.storageKey) {
       return;
@@ -463,8 +492,23 @@ export class MovementManager {
     direction: Direction,
     {
       recordHistory = true,
-    }: { recordHistory?: boolean } = {}
+      skipOppositeCheck = false,
+    }: MoveOptions = {}
   ): boolean {
+    if (!skipOppositeCheck) {
+      const removal = this.removeOppositeHistoryEntry(cube.id, direction);
+      if (removal) {
+        const success = this.scheduleMove(cube, direction, {
+          recordHistory: false,
+          skipOppositeCheck: true,
+        });
+        if (!success) {
+          this.moveHistory.splice(removal.index, 0, removal.entry);
+        }
+        return success;
+      }
+    }
+
     if (this.animationState) return false;
     const [offsetX, offsetY] = directionOffsets[direction];
     const targetPosition: CubePosition = {
