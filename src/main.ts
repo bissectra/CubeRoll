@@ -11,11 +11,15 @@ import {
   Direction,
   FaceOrientationKey,
 } from "./cube-factory";
-import { quaternionSlerp } from "./quaternions";
+import { quaternionSlerp, type Quaternion } from "./quaternions";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
 const CUBE_PICK_RADIUS = GRID_SPACING * 0.6;
+const FACE_ORIENTATION_KEYS = Object.keys(
+  ORIENTATION_QUATERNIONS
+) as FaceOrientationKey[];
+const INITIAL_CUBE_COUNT = 3;
 const centerIndex = Math.floor(GRID_CELLS / 2);
 
 const directionOffsets: Record<Direction, [number, number]> = {
@@ -33,7 +37,20 @@ type DragState = {
   currentX: number;
   currentY: number;
 };
+type CubeState = {
+  id: number;
+  position: CubePosition;
+  orientation: FaceOrientationKey;
+};
+
+type AnimatedCubeRender = {
+  cubeId: number;
+  position: CubePosition;
+  rotation: Quaternion;
+};
+
 type AnimationState = {
+  cubeId: number;
   startTime: number;
   duration: number;
   fromPosition: CubePosition;
@@ -42,32 +59,47 @@ type AnimationState = {
   toOrientation: FaceOrientationKey;
 };
 
+const generateInitialCubes = (): CubeState[] => {
+  const cubes: CubeState[] = [];
+  const usedPositions = new Set<string>();
+  let attempts = 0;
+
+  while (cubes.length < INITIAL_CUBE_COUNT && attempts < 200) {
+    attempts++;
+    const position: CubePosition = {
+      x: Math.floor(Math.random() * GRID_CELLS),
+      y: Math.floor(Math.random() * GRID_CELLS),
+    };
+    const key = `${position.x},${position.y}`;
+    if (usedPositions.has(key)) continue;
+    usedPositions.add(key);
+    const orientation =
+      FACE_ORIENTATION_KEYS[
+        Math.floor(Math.random() * FACE_ORIENTATION_KEYS.length)
+      ];
+    cubes.push({
+      id: cubes.length + 1,
+      position,
+      orientation,
+    });
+  }
+
+  return cubes;
+};
+
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 const sketch = (p: p5) => {
-  let cubePosition: CubePosition = { x: centerIndex, y: centerIndex };
-  let cubeOrientationKey: FaceOrientationKey = "white:green";
-  let animationState: AnimationState | null = null;
   const worldToScreen = (p as any).worldToScreen?.bind(p);
+  let cubes = generateInitialCubes();
+  let animationState: AnimationState | null = null;
+  let dragTargetId: number | null = null;
   const dragState: DragState = {
     active: false,
     startX: 0,
     startY: 0,
     currentX: 0,
     currentY: 0,
-  };
-
-  const startDrag = () => {
-    if (animationState || !isPointerOverCube()) return;
-    dragState.active = true;
-    dragState.startX = p.mouseX;
-    dragState.startY = p.mouseY;
-    dragState.currentX = p.mouseX;
-    dragState.currentY = p.mouseY;
-  };
-
-  const stopDrag = () => {
-    dragState.active = false;
   };
 
   const getCubeWorldCenter = (position: CubePosition) => {
@@ -92,16 +124,28 @@ const sketch = (p: p5) => {
     };
   };
 
-  const isPointerOverCube = () => {
-    const center = getCubeWorldCenter(cubePosition);
-    const screenPosition = projectWorldPoint(center);
-    return (
-      Math.hypot(
+  const findCubeUnderPointer = (): CubeState | null => {
+    let closestCube: CubeState | null = null;
+    let closestDistance = CUBE_PICK_RADIUS;
+
+    cubes.forEach((cube) => {
+      const center = getCubeWorldCenter(cube.position);
+      const screenPosition = projectWorldPoint(center);
+      const dist = Math.hypot(
         p.mouseX - screenPosition.x,
         p.mouseY - screenPosition.y
-      ) <= CUBE_PICK_RADIUS
-    );
+      );
+      if (dist <= closestDistance) {
+        closestDistance = dist;
+        closestCube = cube;
+      }
+    });
+
+    return closestCube;
   };
+
+  const getCubeById = (id: number | null) =>
+    id === null ? null : cubes.find((cube) => cube.id === id) ?? null;
 
   const isInsideGrid = (position: CubePosition) =>
     position.x >= 0 &&
@@ -109,8 +153,28 @@ const sketch = (p: p5) => {
     position.y >= 0 &&
     position.y < GRID_CELLS;
 
-  const triggerMove = () => {
+  const startDrag = () => {
     if (animationState) return;
+    const pickedCube = findCubeUnderPointer();
+    if (!pickedCube) return;
+    dragTargetId = pickedCube.id;
+    dragState.active = true;
+    dragState.startX = p.mouseX;
+    dragState.startY = p.mouseY;
+    dragState.currentX = p.mouseX;
+    dragState.currentY = p.mouseY;
+  };
+
+  const stopDrag = () => {
+    dragState.active = false;
+    dragTargetId = null;
+  };
+
+  const triggerMove = () => {
+    if (animationState || dragTargetId === null) return;
+
+    const targetCube = getCubeById(dragTargetId);
+    if (!targetCube) return;
 
     const dx = dragState.currentX - dragState.startX;
     const dy = dragState.currentY - dragState.startY;
@@ -128,72 +192,77 @@ const sketch = (p: p5) => {
 
     const [offsetX, offsetY] = directionOffsets[direction];
     const targetPosition: CubePosition = {
-      x: cubePosition.x + offsetX,
-      y: cubePosition.y + offsetY,
+      x: targetCube.position.x + offsetX,
+      y: targetCube.position.y + offsetY,
     };
 
     if (!isInsideGrid(targetPosition)) return;
 
     const targetOrientation =
-      DIRECTIONAL_ORIENTATION_MAPS[direction][cubeOrientationKey];
+      DIRECTIONAL_ORIENTATION_MAPS[direction][targetCube.orientation];
 
     if (!targetOrientation) return;
 
     animationState = {
+      cubeId: targetCube.id,
       startTime: p.millis(),
       duration: ANIMATION_DURATION_MS,
-      fromPosition: { ...cubePosition },
+      fromPosition: { ...targetCube.position },
       toPosition: targetPosition,
-      fromOrientation: cubeOrientationKey,
+      fromOrientation: targetCube.orientation,
       toOrientation: targetOrientation,
     };
+
+    dragTargetId = null;
   };
 
-  const getRenderState = () => {
-    if (!animationState) {
-      return {
-        position: cubePosition,
-        rotation: ORIENTATION_QUATERNIONS[cubeOrientationKey],
-      };
-    }
+  const getAnimatedCubeRender = (): AnimatedCubeRender | null => {
+    if (!animationState) return null;
 
+    const currentAnimation = animationState;
     const elapsed = Math.min(
-      Math.max(p.millis() - animationState.startTime, 0),
-      animationState.duration
+      Math.max(p.millis() - currentAnimation.startTime, 0),
+      currentAnimation.duration
     );
-    const rawProgress = elapsed / animationState.duration;
+    const rawProgress = elapsed / currentAnimation.duration;
     const easedProgress = easeOutCubic(rawProgress);
 
     if (rawProgress >= 1) {
-      cubePosition = { ...animationState.toPosition };
-      cubeOrientationKey = animationState.toOrientation;
+      const animatedCube = cubes.find(
+        (cube) => cube.id === currentAnimation.cubeId
+      );
+      if (animatedCube) {
+        animatedCube.position = { ...currentAnimation.toPosition };
+        animatedCube.orientation = currentAnimation.toOrientation;
+      }
       animationState = null;
-      return {
-        position: cubePosition,
-        rotation: ORIENTATION_QUATERNIONS[cubeOrientationKey],
-      };
+      return null;
     }
 
     const position = {
       x: p.lerp(
-        animationState.fromPosition.x,
-        animationState.toPosition.x,
+        currentAnimation.fromPosition.x,
+        currentAnimation.toPosition.x,
         easedProgress
       ),
       y: p.lerp(
-        animationState.fromPosition.y,
-        animationState.toPosition.y,
+        currentAnimation.fromPosition.y,
+        currentAnimation.toPosition.y,
         easedProgress
       ),
     };
 
     const rotation = quaternionSlerp(
-      ORIENTATION_QUATERNIONS[animationState.fromOrientation],
-      ORIENTATION_QUATERNIONS[animationState.toOrientation],
+      ORIENTATION_QUATERNIONS[currentAnimation.fromOrientation],
+      ORIENTATION_QUATERNIONS[currentAnimation.toOrientation],
       easedProgress
     );
 
-    return { position, rotation };
+    return {
+      cubeId: currentAnimation.cubeId,
+      position,
+      rotation,
+    };
   };
 
   p.setup = () => {
@@ -207,14 +276,24 @@ const sketch = (p: p5) => {
     p.background(16);
     p.lights();
 
-    const { position, rotation } = getRenderState();
+    const activeCubeRender = getAnimatedCubeRender();
+    const isAnimating = Boolean(activeCubeRender);
 
     p.push();
-    drawCube(p, position.x, position.y, rotation);
+    cubes.forEach((cube) => {
+      const render =
+        activeCubeRender && activeCubeRender.cubeId === cube.id
+          ? activeCubeRender
+          : {
+              position: cube.position,
+              rotation: ORIENTATION_QUATERNIONS[cube.orientation],
+            };
+      drawCube(p, render.position.x, render.position.y, render.rotation);
+    });
     drawGrid(p);
     p.pop();
 
-    drawOverlay(p, dragState, animationState !== null);
+    drawOverlay(p, dragState, isAnimating);
   };
 
   p.mousePressed = () => {
