@@ -224,6 +224,7 @@ export class MovementManager {
   private worldToScreen:
     | ((vector: p5.Vector) => p5.Vector)
     | undefined = undefined;
+  private moveHistory: { cubeId: number; direction: Direction }[] = [];
   private goals: Goal[] = [];
 
   constructor(private readonly p: p5) {
@@ -352,6 +353,7 @@ export class MovementManager {
       DIRECTIONAL_ORIENTATION_MAPS[direction][targetCube.orientation];
     if (!targetOrientation) return;
 
+    this.moveHistory.push({ cubeId: targetCube.id, direction });
     this.animationState = {
       cubeId: targetCube.id,
       startTime: this.p.millis(),
@@ -474,5 +476,9 @@ export class MovementManager {
 
   public isAnimating() {
     return this.animationState !== null;
+  }
+
+  public getMoveHistory() {
+    return [...this.moveHistory];
   }
 }
