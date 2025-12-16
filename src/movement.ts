@@ -144,32 +144,36 @@ const mulberry32 = (seed: number) => {
 };
 
 const generateInitialCubes = (count: number, seed: number): CubeState[] => {
-  const cubes: CubeState[] = [];
-  const usedPositions = new Set<string>();
-  let attempts = 0;
-  const rng = mulberry32(seed);
-  const maxCount = getGridCells() * getGridCells();
-  const targetCount = Math.min(count, maxCount);
-
+  const gridCells = getGridCells();
+  const totalCells = gridCells * gridCells;
+  const targetCount = Math.min(count, totalCells);
   if (targetCount <= 0) {
     return [];
   }
 
-  while (cubes.length < targetCount && attempts < 400) {
-    attempts++;
-    const position: CubePosition = {
-      x: Math.floor(rng() * getGridCells()),
-      y: Math.floor(rng() * getGridCells()),
-    };
-    const key = `${position.x},${position.y}`;
-    if (usedPositions.has(key)) continue;
-    usedPositions.add(key);
+  const rng = mulberry32(seed);
+  const positions: CubePosition[] = [];
+  for (let y = 0; y < gridCells; y++) {
+    for (let x = 0; x < gridCells; x++) {
+      positions.push({ x, y });
+    }
+  }
+
+  // Fisher-Yates shuffle using seeded RNG
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+
+  const cubes: CubeState[] = [];
+  for (let index = 0; index < targetCount; index++) {
+    const position = positions[index];
     const orientation =
       FACE_ORIENTATION_KEYS[
         Math.floor(rng() * FACE_ORIENTATION_KEYS.length)
       ];
     cubes.push({
-      id: cubes.length + 1,
+      id: index + 1,
       position,
       orientation,
     });
