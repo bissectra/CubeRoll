@@ -47,7 +47,8 @@ canvas {
   gap: 8px;
 }
 
-.control-panel button {
+.control-panel button,
+.control-panel a {
   padding: 6px 12px;
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -58,8 +59,13 @@ canvas {
   text-transform: uppercase;
   cursor: pointer;
   transition: background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
-.control-panel button:hover {
+.control-panel button:hover,
+.control-panel a:hover {
   background: rgba(255, 255, 255, 0.2);
 }

@@ -22,6 +22,7 @@ import {
   playMoveSound,
   unlockAudioContext,
 } from "./sounds";
+import { sanitizeSeedValue, DEFAULT_SEED_VALUE } from "./params";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -38,7 +39,6 @@ const GOAL_COLORS: FaceColorName[] = [
   "yellow",
 ];
 const DEFAULT_INITIAL_CUBE_COUNT = 1;
-const DEFAULT_SEED_VALUE = "default";
 
 const parseNumberParam = (value: string | null, fallback: number) => {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -100,11 +100,7 @@ const getInitialParams = () => {
     Math.max(0, requestedCount)
   );
   const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
-  const sanitizeSeed = (value: string) => {
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, "");
-    return cleaned.length === 0 ? DEFAULT_SEED_VALUE : cleaned;
-  };
-  const safeSeedValue = sanitizeSeed(requestedSeedValue);
+  const safeSeedValue = sanitizeSeedValue(requestedSeedValue);
 
   ensureUrlParams(safeGrid, safeCount, safeSeedValue);
 
@@ -793,6 +789,14 @@ export class MovementManager {
 
   public getMoveHistory() {
     return [...this.moveHistory];
+  }
+
+  public getGridSize() {
+    return this.gridSize;
+  }
+
+  public getSeedValue() {
+    return this.seedValue;
   }
 
   public undoLastMove() {

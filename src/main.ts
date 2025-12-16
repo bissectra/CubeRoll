@@ -29,7 +29,20 @@ const sketch = (p: p5) => {
   controlPanel.appendChild(resetButton);
   controlPanel.appendChild(previousLevelButton);
   controlPanel.appendChild(nextLevelButton);
+  const statsLink = document.createElement("a");
+  statsLink.className = "stats-link";
+  statsLink.textContent = "Stats";
+  statsLink.setAttribute("role", "button");
+  controlPanel.appendChild(statsLink);
   document.body.appendChild(controlPanel);
+
+  const updateStatsLink = () => {
+    const params = new URLSearchParams();
+    params.set("m", String(movement.getGridSize()));
+    params.set("seed", movement.getSeedValue());
+    statsLink.href = `stats.html?${params.toString()}`;
+  };
+  updateStatsLink();
 
   p.setup = () => {
     const canvas = p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
