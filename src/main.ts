@@ -153,6 +153,14 @@ const sketch = (p: p5) => {
     position.y >= 0 &&
     position.y < GRID_CELLS;
 
+  const isCellOccupied = (position: CubePosition, ignoreId: number | null = null) =>
+    cubes.some(
+      (cube) =>
+        cube.id !== ignoreId &&
+        cube.position.x === position.x &&
+        cube.position.y === position.y
+    );
+
   const startDrag = () => {
     if (animationState) return;
     const pickedCube = findCubeUnderPointer();
@@ -197,6 +205,7 @@ const sketch = (p: p5) => {
     };
 
     if (!isInsideGrid(targetPosition)) return;
+    if (isCellOccupied(targetPosition, targetCube.id)) return;
 
     const targetOrientation =
       DIRECTIONAL_ORIENTATION_MAPS[direction][targetCube.orientation];
