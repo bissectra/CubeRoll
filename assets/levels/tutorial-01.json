@@ -1,0 +1,23 @@
+{
+  "name": "First Roll",
+  "description": "Learn to roll a cube to match the goal",
+  "difficulty": 1.0,
+  "parMoves": 2,
+  "tags": ["tutorial", "basics"],
+  "author": "CubeRoll",
+  "dateCreated": "2025-12-16",
+  "gridSize": 3,
+  "cubes": [
+    {
+      "id": 1,
+      "position": { "x": 0, "y": 0 },
+      "orientation": "red:green"
+    }
+  ],
+  "goals": [
+    {
+      "position": { "x": 2, "y": 0 },
+      "color": "red"
+    }
+  ]
+}

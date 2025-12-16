@@ -1,0 +1,23 @@
+{
+  "name": "Corner Turn",
+  "description": "Navigate around a corner to reach your goal",
+  "difficulty": 2.5,
+  "parMoves": 4,
+  "tags": ["easy", "pathfinding"],
+  "author": "CubeRoll",
+  "dateCreated": "2025-12-16",
+  "gridSize": 3,
+  "cubes": [
+    {
+      "id": 1,
+      "position": { "x": 0, "y": 0 },
+      "orientation": "blue:green"
+    }
+  ],
+  "goals": [
+    {
+      "position": { "x": 2, "y": 2 },
+      "color": "blue"
+    }
+  ]
+}
