@@ -54,6 +54,30 @@ const hashSeedString = (value: string) => {
   return hash >>> 0;
 };
 
+const ensureLevelOnlyUrl = (levelValue: string) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  const currentParams = new URLSearchParams(url.search);
+  
+  const orderedParams = new URLSearchParams();
+  orderedParams.set("level", levelValue);
+  
+  // Preserve any other non-standard params
+  currentParams.forEach((value, key) => {
+    if (["m", "n", "seed", "level"].includes(key)) return;
+    orderedParams.set(key, value);
+  });
+
+  const newSearch = orderedParams.toString();
+  if (newSearch !== url.search.substring(1)) {
+    url.search = newSearch;
+    window.history.replaceState(window.history.state, "", url.toString());
+  }
+};
+
 const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string) => {
   if (typeof window === "undefined") {
     return;
@@ -65,20 +89,7 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   // If level param is present and has a value, only keep the level param
   const levelValue = currentParams.get("level");
   if (levelValue) {
-    const orderedParams = new URLSearchParams();
-    orderedParams.set("level", levelValue);
-    
-    // Preserve any other non-standard params
-    currentParams.forEach((value, key) => {
-      if (["m", "n", "seed", "level"].includes(key)) return;
-      orderedParams.set(key, value);
-    });
-
-    const newSearch = orderedParams.toString();
-    if (newSearch !== url.search.substring(1)) {
-      url.search = newSearch;
-      window.history.replaceState(window.history.state, "", url.toString());
-    }
+    ensureLevelOnlyUrl(levelValue);
     return;
   }
 
@@ -115,7 +126,7 @@ const getInitialParams = () => {
       const safeSeedValue = getTodaySeedValue();
       const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
       
-      ensureUrlParams(safeGrid, safeCount, safeSeedValue);
+      ensureLevelOnlyUrl(levelId);
       
       return {
         gridSize: safeGrid,
