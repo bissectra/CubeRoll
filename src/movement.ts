@@ -110,6 +110,12 @@ const directionOffsets: Record<Direction, [number, number]> = {
   east: [1, 0],
   west: [-1, 0],
 };
+const oppositeDirection: Record<Direction, Direction> = {
+  north: "south",
+  south: "north",
+  east: "west",
+  west: "east",
+};
 
 type CubePosition = { x: number; y: number };
 
@@ -157,6 +163,11 @@ const mulberry32 = (seed: number) => {
 type Goal = {
   position: CubePosition;
   color: FaceColorName;
+};
+
+type MoveHistoryEntry = {
+  cubeId: number;
+  direction: Direction;
 };
 
 const generateLevel = (
@@ -224,7 +235,7 @@ export class MovementManager {
   private worldToScreen:
     | ((vector: p5.Vector) => p5.Vector)
     | undefined = undefined;
-  private moveHistory: { cubeId: number; direction: Direction }[] = [];
+  private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
 
   constructor(private readonly p: p5) {
@@ -303,6 +314,45 @@ export class MovementManager {
     );
   }
 
+  private scheduleMove(
+    cube: CubeState,
+    direction: Direction,
+    {
+      recordHistory = true,
+    }: { recordHistory?: boolean } = {}
+  ): boolean {
+    if (this.animationState) return false;
+    const [offsetX, offsetY] = directionOffsets[direction];
+    const targetPosition: CubePosition = {
+      x: cube.position.x + offsetX,
+      y: cube.position.y + offsetY,
+    };
+    if (!this.isInsideGrid(targetPosition)) return false;
+    if (this.isCellOccupied(targetPosition, cube.id)) {
+      return false;
+    }
+
+    const targetOrientation =
+      DIRECTIONAL_ORIENTATION_MAPS[direction][cube.orientation];
+    if (!targetOrientation) return false;
+
+    this.animationState = {
+      cubeId: cube.id,
+      startTime: this.p.millis(),
+      duration: ANIMATION_DURATION_MS,
+      fromPosition: { ...cube.position },
+      toPosition: targetPosition,
+      fromOrientation: cube.orientation,
+      toOrientation: targetOrientation,
+    };
+
+    if (recordHistory) {
+      this.moveHistory.push({ cubeId: cube.id, direction });
+    }
+
+    return true;
+  }
+
   private startDrag() {
     if (this.animationState) return;
     const pickedCube = this.findCubeUnderPointer();
@@ -340,31 +390,9 @@ export class MovementManager {
         ? "south"
         : "north";
 
-    const [offsetX, offsetY] = directionOffsets[direction];
-    const targetPosition: CubePosition = {
-      x: targetCube.position.x + offsetX,
-      y: targetCube.position.y + offsetY,
-    };
-
-    if (!this.isInsideGrid(targetPosition)) return;
-    if (this.isCellOccupied(targetPosition, targetCube.id)) return;
-
-    const targetOrientation =
-      DIRECTIONAL_ORIENTATION_MAPS[direction][targetCube.orientation];
-    if (!targetOrientation) return;
-
-    this.moveHistory.push({ cubeId: targetCube.id, direction });
-    this.animationState = {
-      cubeId: targetCube.id,
-      startTime: this.p.millis(),
-      duration: ANIMATION_DURATION_MS,
-      fromPosition: { ...targetCube.position },
-      toPosition: targetPosition,
-      fromOrientation: targetCube.orientation,
-      toOrientation: targetOrientation,
-    };
-
-    this.dragTargetId = null;
+    if (this.scheduleMove(targetCube, direction)) {
+      this.dragTargetId = null;
+    }
   }
 
   private getAnimatedCubeRender(): AnimatedCubeRender | null {
@@ -480,5 +508,21 @@ export class MovementManager {
 
   public getMoveHistory() {
     return [...this.moveHistory];
+  }
+
+  public undoLastMove() {
+    if (this.animationState) return false;
+    const entry = this.moveHistory.pop();
+    if (!entry) return false;
+    const cube = this.cubes.find((c) => c.id === entry.cubeId);
+    if (!cube) return false;
+    const backwards = oppositeDirection[entry.direction];
+    const success = this.scheduleMove(cube, backwards, {
+      recordHistory: false,
+    });
+    if (!success) {
+      this.moveHistory.push(entry);
+    }
+    return success;
   }
 }

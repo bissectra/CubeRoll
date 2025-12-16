@@ -28,6 +28,11 @@ const sketch = (p: p5) => {
   p.mousePressed = () => movement.handleMousePressed();
   p.mouseDragged = () => movement.handleMouseDragged();
   p.mouseReleased = () => movement.handleMouseReleased();
+  p.keyPressed = () => {
+    if (p.key.toLowerCase() === "u") {
+      movement.undoLastMove();
+    }
+  };
 
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
