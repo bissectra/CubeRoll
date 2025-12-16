@@ -6,6 +6,8 @@ import {
   GRID_RADIUS,
   GRID_SPACING,
   GRID_HALF_COUNT,
+  ORIENTATION_QUATERNIONS,
+  drawCube,
 } from "./cube-factory";
 
 const sketch = (p: p5) => {
@@ -37,6 +39,8 @@ const sketch = (p: p5) => {
         drawFloor(p, xIndex, yIndex, color);
       });
     });
+
+    drawCube(p, 1,1, ORIENTATION_QUATERNIONS["white:blue"]);
 
     drawGrid(p);
     p.pop();
