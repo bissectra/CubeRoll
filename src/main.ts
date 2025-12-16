@@ -15,6 +15,7 @@ import { quaternionSlerp } from "./quaternions";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
+const CUBE_PICK_RADIUS = GRID_SPACING * 0.6;
 const centerIndex = Math.floor(GRID_CELLS / 2);
 
 const directionOffsets: Record<Direction, [number, number]> = {
@@ -47,6 +48,7 @@ const sketch = (p: p5) => {
   let cubePosition: CubePosition = { x: centerIndex, y: centerIndex };
   let cubeOrientationKey: FaceOrientationKey = "white:green";
   let animationState: AnimationState | null = null;
+  const worldToScreen = (p as any).worldToScreen?.bind(p);
   const dragState: DragState = {
     active: false,
     startX: 0,
@@ -56,7 +58,7 @@ const sketch = (p: p5) => {
   };
 
   const startDrag = () => {
-    if (animationState) return;
+    if (animationState || !isPointerOverCube()) return;
     dragState.active = true;
     dragState.startX = p.mouseX;
     dragState.startY = p.mouseY;
@@ -66,6 +68,39 @@ const sketch = (p: p5) => {
 
   const stopDrag = () => {
     dragState.active = false;
+  };
+
+  const getCubeWorldCenter = (position: CubePosition) => {
+    const halfSize = GRID_SPACING / 2;
+    const cellCenterX =
+      -GRID_RADIUS + GRID_SPACING / 2 + position.x * GRID_SPACING;
+    const cellCenterY =
+      -GRID_RADIUS + GRID_SPACING / 2 + position.y * GRID_SPACING;
+    return { x: cellCenterX, y: cellCenterY, z: halfSize };
+  };
+
+  const projectWorldPoint = (point: { x: number; y: number; z: number }) => {
+    if (worldToScreen) {
+      const projected = worldToScreen(
+        p.createVector(point.x, point.y, point.z)
+      );
+      return { x: projected.x, y: projected.y };
+    }
+    return {
+      x: p.width / 2 + point.x,
+      y: p.height / 2 + point.y,
+    };
+  };
+
+  const isPointerOverCube = () => {
+    const center = getCubeWorldCenter(cubePosition);
+    const screenPosition = projectWorldPoint(center);
+    return (
+      Math.hypot(
+        p.mouseX - screenPosition.x,
+        p.mouseY - screenPosition.y
+      ) <= CUBE_PICK_RADIUS
+    );
   };
 
   const isInsideGrid = (position: CubePosition) =>
