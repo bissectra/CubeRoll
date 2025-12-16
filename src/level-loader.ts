@@ -28,10 +28,11 @@ export async function loadAllLevels(): Promise<Map<string, LevelData>> {
   }
 
   const levels = new Map<string, LevelData>();
+  const baseUrl = import.meta.env.BASE_URL;
 
   for (const levelId of LEVEL_FILES) {
     try {
-      const response = await fetch(`/assets/levels/${levelId}.json`);
+      const response = await fetch(`${baseUrl}levels/${levelId}.json`);
       if (!response.ok) {
         console.warn(`Failed to load level ${levelId}: ${response.statusText}`);
         continue;
