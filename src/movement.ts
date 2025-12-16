@@ -448,6 +448,7 @@ export class MovementManager {
         this.levelId = null;
         this.currentLevelData = null;
         ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
+        // Continue with procedural generation below
       } else {
         // Successfully loaded curated level
         this.currentLevelData = levelData;
@@ -495,24 +496,25 @@ export class MovementManager {
             this.levelId = null;
             this.currentLevelData = null;
             ensureUrlParams(this.gridSize, this.count, this.seedValue, null);
-            // Recursively call to continue with procedural mode
-            await this.loadLevelState(useStored);
-            return;
+            // Continue with procedural generation below
           }
         }
         
-        this.bestSolution = this.bestSolutionKey
-          ? loadBestSolution(this.bestSolutionKey)
-          : null;
-        this.resetDragState();
-        this.persistState();
-        
-        ensureUrlParams(this.gridSize, this.count, this.seedValue, this.levelId);
-        return;
+        // Only complete curated level loading if we didn't fall back
+        if (this.levelId) {
+          this.bestSolution = this.bestSolutionKey
+            ? loadBestSolution(this.bestSolutionKey)
+            : null;
+          this.resetDragState();
+          this.persistState();
+          
+          ensureUrlParams(this.gridSize, this.count, this.seedValue, this.levelId);
+          return;
+        }
       }
     }
     
-    // Procedural generation mode
+    // Procedural generation mode (or fallback from failed curated level)
     this.ensureCountWithinUnlockedRange();
     this.currentLevelData = null;
     this.storageKey = buildStorageKey(
