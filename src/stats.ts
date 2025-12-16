@@ -108,10 +108,13 @@ actions.className = "stats-actions";
 const backLink = document.createElement("a");
 backLink.className = "stats-back-link";
 backLink.textContent = "Return to the game";
-const backParams = new URLSearchParams();
-backParams.set("m", String(gridSize));
-backParams.set("seed", seedValue);
-backLink.href = `/?${backParams.toString()}`;
+backLink.href = "#";
+backLink.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (typeof window !== "undefined") {
+    window.history.back();
+  }
+});
 actions.appendChild(backLink);
 
 root.append(header, intro, statsList, note, actions);

@@ -65,12 +65,10 @@ const sketch = (p: p5) => {
     const statusLine = movement.isAnimating() ? "Rolling..." : "Drag a cube";
     const moveLine = `Moves: ${movement.getMoveCount()}`;
     statusPanel.innerHTML = `<span>${statusLine}</span><span>${moveLine}</span>`;
-    const showNavigation =
+    const canAdvance =
       movement.hasBestSolution() && movement.canAdvanceLevel();
-    nextLevelButton.style.display = showNavigation ? "inline-flex" : "none";
-    previousLevelButton.style.display = movement.canGoBack()
-      ? "inline-flex"
-      : "none";
+    nextLevelButton.disabled = !canAdvance;
+    previousLevelButton.disabled = !movement.canGoBack();
   };
 
   p.mousePressed = () => movement.handleMousePressed();

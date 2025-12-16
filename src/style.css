@@ -69,3 +69,10 @@ canvas {
 .control-panel a:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.control-panel button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.25);
+}
