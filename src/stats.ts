@@ -1,6 +1,6 @@
 import "./stats.css";
 import { getDefaultGridSize, getGridSizeOptions } from "./grid-config";
-import { sanitizeSeedValue, DEFAULT_SEED_VALUE } from "./params";
+import { sanitizeSeedValue, getTodaySeedValue } from "./params";
 
 const parseNumberParam = (value: string | null, fallback: number) => {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -21,7 +21,7 @@ const gridSize = gridOptions.includes(requestedGrid)
   ? requestedGrid
   : getDefaultGridSize();
 const seedValue = sanitizeSeedValue(
-  params.get("seed") ?? DEFAULT_SEED_VALUE
+  params.get("seed") ?? getTodaySeedValue()
 );
 
 const maxCubes = gridSize * gridSize;

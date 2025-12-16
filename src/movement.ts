@@ -22,7 +22,7 @@ import {
   playMoveSound,
   unlockAudioContext,
 } from "./sounds";
-import { sanitizeSeedValue, DEFAULT_SEED_VALUE } from "./params";
+import { sanitizeSeedValue, getTodaySeedValue } from "./params";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -93,7 +93,7 @@ const getInitialParams = () => {
     : getDefaultGridSize();
   setGridCells(safeGrid);
 
-  const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
+  const requestedSeedValue = params.get("seed") ?? getTodaySeedValue();
   const safeSeedValue = sanitizeSeedValue(requestedSeedValue);
   const unlockedLimit = getUnlockedLevelLimitFor(safeGrid, safeSeedValue);
   const requestedCountParam = params.get("n");
