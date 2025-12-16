@@ -28,6 +28,21 @@ export const unlockAudioContext = () => {
   ensureContext();
 };
 
+export const setupAudioUnlock = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const unlockHandler = () => {
+    unlockAudioContext();
+  };
+  window.addEventListener("touchstart", unlockHandler, {
+    once: true,
+    passive: true,
+  });
+  window.addEventListener("mousedown", unlockHandler, { once: true });
+  window.addEventListener("pointerdown", unlockHandler, { once: true });
+};
+
 const playTone = (
   frequency: number,
   duration = 0.1,

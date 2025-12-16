@@ -2,10 +2,13 @@ import "./style.css";
 import p5 from "p5";
 import { MovementManager, type DragState } from "./movement";
 import { drawGrid, drawOverlay } from "./details";
+import { setupAudioUnlock } from "./sounds";
 
 const statusPanel = document.createElement("div");
 statusPanel.className = "status-panel";
 document.body.appendChild(statusPanel);
+
+setupAudioUnlock();
 
 const sketch = (p: p5) => {
   const movement = new MovementManager(p);
