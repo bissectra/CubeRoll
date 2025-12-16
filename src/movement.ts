@@ -62,6 +62,25 @@ const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string
   const url = new URL(window.location.href);
   const currentParams = new URLSearchParams(url.search);
 
+  // If level param is present, only keep the level param
+  if (currentParams.has("level")) {
+    const orderedParams = new URLSearchParams();
+    orderedParams.set("level", currentParams.get("level")!);
+    
+    // Preserve any other non-standard params
+    currentParams.forEach((value, key) => {
+      if (["m", "n", "seed", "level"].includes(key)) return;
+      orderedParams.set(key, value);
+    });
+
+    const newSearch = orderedParams.toString();
+    if (newSearch !== url.search.substring(1)) {
+      url.search = newSearch;
+      window.history.replaceState(window.history.state, "", url.toString());
+    }
+    return;
+  }
+
   const orderedParams = new URLSearchParams();
   orderedParams.set("m", String(gridSize));
   orderedParams.set("n", String(countParam));
@@ -84,6 +103,26 @@ const getInitialParams = () => {
     typeof window === "undefined"
       ? new URLSearchParams()
       : new URLSearchParams(window.location.search);
+  
+  // If level param is present, ignore other params
+  if (params.has("level")) {
+    const levelId = params.get("level");
+    const safeGrid = getDefaultGridSize();
+    setGridCells(safeGrid);
+    const safeSeedValue = getTodaySeedValue();
+    const safeCount = DEFAULT_INITIAL_CUBE_COUNT;
+    
+    ensureUrlParams(safeGrid, safeCount, safeSeedValue);
+    
+    return {
+      gridSize: safeGrid,
+      count: safeCount,
+      seedValue: safeSeedValue,
+      seed: hashSeedString(safeSeedValue),
+      levelId,
+    };
+  }
+  
   const requestedGrid = parseNumberParam(
     params.get("m"),
     getDefaultGridSize()
@@ -116,6 +155,7 @@ const getInitialParams = () => {
     count: safeCount,
     seedValue: safeSeedValue,
     seed: hashSeedString(safeSeedValue),
+    levelId: null,
   };
 };
 
@@ -378,6 +418,7 @@ export class MovementManager {
   private count: number;
   private seedValue: string;
   private seed: number;
+  private levelId: string | null;
   private moveHistory: MoveHistoryEntry[] = [];
   private goals: Goal[] = [];
   private storageKey: string | null = null;
@@ -390,6 +431,7 @@ export class MovementManager {
     this.count = params.count;
     this.seedValue = params.seedValue;
     this.seed = params.seed;
+    this.levelId = params.levelId ?? null;
     this.loadLevelState();
   }
 
