@@ -20,8 +20,8 @@ const sketch = (p: p5) => {
     p.setAttributes("antialias", true);
   };
 
-  const northEntries = Object.entries(
-    DIRECTIONAL_ORIENTATION_MAPS.north
+  const westEntries = Object.entries(
+    DIRECTIONAL_ORIENTATION_MAPS.west
   ) as [FaceOrientationKey, FaceOrientationKey][];
   const animationDuration = 240;
   const evenXIndices: number[] = [];
@@ -35,7 +35,7 @@ const sketch = (p: p5) => {
   const slots = evenXIndices.flatMap((xIndex) =>
     evenYIndices.map((yIndex) => ({ xIndex, yIndex }))
   );
-  const cubeAnimations = northEntries.map(([startKey, endKey], entryIndex) => ({
+  const cubeAnimations = westEntries.map(([startKey, endKey], entryIndex) => ({
     slot: slots[entryIndex % slots.length],
     startKey,
     endKey,
@@ -53,8 +53,9 @@ const sketch = (p: p5) => {
       const startOrientation = ORIENTATION_QUATERNIONS[startKey];
       const endOrientation = ORIENTATION_QUATERNIONS[endKey];
 
-      const currentX = slot.xIndex;
-      const currentY = slot.yIndex - easedProgress;
+      const startX = slot.xIndex + 1;
+      const currentX = startX - easedProgress;
+      const currentY = slot.yIndex;
       const currentOrientation = quaternionSlerp(
         startOrientation,
         endOrientation,
