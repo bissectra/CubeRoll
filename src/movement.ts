@@ -93,14 +93,20 @@ const getInitialParams = () => {
     : getDefaultGridSize();
   setGridCells(safeGrid);
 
-  const requestedCount = parseNumberParam(params.get("n"), DEFAULT_INITIAL_CUBE_COUNT);
+  const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
+  const safeSeedValue = sanitizeSeedValue(requestedSeedValue);
+  const unlockedLimit = getUnlockedLevelLimitFor(safeGrid, safeSeedValue);
+  const requestedCountParam = params.get("n");
+  const requestedCount =
+    requestedCountParam === null
+      ? unlockedLimit
+      : parseNumberParam(requestedCountParam, DEFAULT_INITIAL_CUBE_COUNT);
   const totalCells = getGridCells() * getGridCells();
   const safeCount = Math.min(
     totalCells,
+    unlockedLimit,
     Math.max(0, requestedCount)
   );
-  const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
-  const safeSeedValue = sanitizeSeedValue(requestedSeedValue);
 
   ensureUrlParams(safeGrid, safeCount, safeSeedValue);
 
@@ -206,6 +212,47 @@ const buildStorageKey = (
 ) => `${gridSize}:${count}:${seedValue}`;
 
 const buildBestSolutionKey = (baseKey: string) => `${baseKey}:bestSolution`;
+
+function buildLevelBestSolutionKey(
+  gridSize: number,
+  count: number,
+  seedValue: string
+) {
+  return buildBestSolutionKey(buildStorageKey(gridSize, count, seedValue));
+}
+
+function hasStoredBestSolutionForLevel(
+  gridSize: number,
+  count: number,
+  seedValue: string
+) {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return false;
+  }
+  const key = buildLevelBestSolutionKey(gridSize, count, seedValue);
+  return window.localStorage.getItem(key) !== null;
+}
+
+function countCompletedLevelsFor(gridSize: number, seedValue: string) {
+  const totalCells = gridSize * gridSize;
+  let completed = 0;
+  for (let level = 1; level <= totalCells; level += 1) {
+    if (!hasStoredBestSolutionForLevel(gridSize, level, seedValue)) {
+      break;
+    }
+    completed += 1;
+  }
+  return completed;
+}
+
+function getUnlockedLevelLimitFor(gridSize: number, seedValue: string) {
+  const totalCells = gridSize * gridSize;
+  const completed = countCompletedLevelsFor(gridSize, seedValue);
+  return Math.max(
+    1,
+    Math.min(totalCells, completed + 1)
+  );
+}
 
 const loadPersistedState = (key: string): PersistedState | null => {
   if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
@@ -357,7 +404,15 @@ export class MovementManager {
     };
   }
 
+  private ensureCountWithinUnlockedRange() {
+    const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
+    if (this.count > unlockedLimit) {
+      this.count = unlockedLimit;
+    }
+  }
+
   private loadLevelState(useStored = true) {
+    this.ensureCountWithinUnlockedRange();
     this.storageKey = buildStorageKey(
       this.gridSize,
       this.count,
@@ -522,10 +577,11 @@ export class MovementManager {
 
   public nextLevel() {
     const maxCells = this.gridSize * this.gridSize;
-    if (this.count >= maxCells) {
+    const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
+    if (this.count >= maxCells || this.count >= unlockedLimit) {
       return;
     }
-    this.count = Math.min(maxCells, this.count + 1);
+    this.count = Math.min(maxCells, unlockedLimit, this.count + 1);
     ensureUrlParams(this.gridSize, this.count, this.seedValue);
     this.loadLevelState();
   }
@@ -544,7 +600,8 @@ export class MovementManager {
   }
 
   public canAdvanceLevel() {
-    return this.count < this.gridSize * this.gridSize;
+    const unlockedLimit = getUnlockedLevelLimitFor(this.gridSize, this.seedValue);
+    return this.count < unlockedLimit;
   }
 
   public canGoBack() {
