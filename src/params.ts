@@ -9,3 +9,10 @@ export const sanitizeSeedValue = (value: string, fallback = getTodaySeedValue())
   const cleaned = value.replace(/[^a-zA-Z0-9]/g, "");
   return cleaned.length === 0 ? fallback : cleaned;
 };
+
+export const sanitizeLevelId = (value: string | null): string | null => {
+  if (!value) return null;
+  // Only allow alphanumeric and hyphens for level IDs
+  const cleaned = value.replace(/[^a-zA-Z0-9-]/g, "");
+  return cleaned.length > 0 ? cleaned : null;
+};
