@@ -3,6 +3,10 @@ import p5 from "p5";
 import { MovementManager, type DragState } from "./movement";
 import { drawGrid, drawOverlay } from "./details";
 
+const statusPanel = document.createElement("div");
+statusPanel.className = "status-panel";
+document.body.appendChild(statusPanel);
+
 const sketch = (p: p5) => {
   const movement = new MovementManager(p);
 
@@ -17,12 +21,16 @@ const sketch = (p: p5) => {
     p.background(16);
     p.lights();
 
-  p.push();
-  movement.drawCubes();
-  drawGrid(p);
-  p.pop();
+    p.push();
+    movement.drawCubes();
+    drawGrid(p);
+    p.pop();
 
-  drawOverlay(p, movement.getDragState(), movement.isAnimating());
+    drawOverlay(p, movement.getDragState());
+
+    const statusLine = movement.isAnimating() ? "Rolling..." : "Drag a cube";
+    const moveLine = `Moves: ${movement.getMoveCount()}`;
+    statusPanel.innerHTML = `<span>${statusLine}</span><span>${moveLine}</span>`;
   };
 
   p.mousePressed = () => movement.handleMousePressed();

@@ -17,11 +17,7 @@ export function drawGrid(p: p5) {
   }
 }
 
-export function drawOverlay(
-  p: p5,
-  dragState: DragState,
-  isAnimating: boolean
-) {
+export function drawOverlay(p: p5, dragState: DragState) {
   p.push();
   const rendererGL = (p as any)._renderer?.GL;
   if (rendererGL) {
@@ -43,15 +39,6 @@ export function drawOverlay(
     p.circle(dragState.startX, dragState.startY, 8);
     p.circle(dragState.currentX, dragState.currentY, 8);
   }
-
-  p.noStroke();
-  p.fill(255);
-  p.textSize(14);
-  p.textAlign(p.LEFT, p.TOP);
-  const statusText = isAnimating
-    ? "Rolling..."
-    : "Drag the cube along any axis to roll it.";
-  p.text(statusText, 20, 20);
 
   if (rendererGL) {
     rendererGL.enable(rendererGL.DEPTH_TEST);

@@ -533,4 +533,8 @@ export class MovementManager {
     }
     return success;
   }
+
+  public getMoveCount() {
+    return this.moveHistory.length;
+  }
 }
