@@ -1,10 +1,12 @@
 import p5 from "p5";
 import {
   drawCube,
+  drawFloor,
   DIRECTIONAL_ORIENTATION_MAPS,
   ORIENTATION_QUATERNIONS,
   Direction,
   FaceOrientationKey,
+  FaceColorName,
 } from "./cube-factory";
 import {
   GRID_SPACING,
@@ -22,6 +24,14 @@ const CUBE_PICK_RADIUS = GRID_SPACING * 0.6;
 const FACE_ORIENTATION_KEYS = Object.keys(
   ORIENTATION_QUATERNIONS
 ) as FaceOrientationKey[];
+const GOAL_COLORS: FaceColorName[] = [
+  "red",
+  "orange",
+  "green",
+  "blue",
+  "white",
+  "yellow",
+];
 const DEFAULT_INITIAL_CUBE_COUNT = 1;
 const DEFAULT_SEED_VALUE = "default";
 
@@ -79,8 +89,9 @@ const getInitialParams = () => {
   setGridCells(safeGrid);
 
   const requestedCount = parseNumberParam(params.get("n"), DEFAULT_INITIAL_CUBE_COUNT);
+  const totalCells = getGridCells() * getGridCells();
   const safeCount = Math.min(
-    getGridCells() * getGridCells(),
+    totalCells,
     Math.max(0, requestedCount)
   );
   const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
@@ -143,12 +154,20 @@ const mulberry32 = (seed: number) => {
   };
 };
 
-const generateInitialCubes = (count: number, seed: number): CubeState[] => {
-  const gridCells = getGridCells();
+type Goal = {
+  position: CubePosition;
+  color: FaceColorName;
+};
+
+const generateLevel = (
+  gridCells: number,
+  count: number,
+  seed: number
+): { cubes: CubeState[]; goals: Goal[] } => {
   const totalCells = gridCells * gridCells;
   const targetCount = Math.min(count, totalCells);
   if (targetCount <= 0) {
-    return [];
+    return { cubes: [], goals: [] };
   }
 
   const rng = mulberry32(seed);
@@ -159,7 +178,6 @@ const generateInitialCubes = (count: number, seed: number): CubeState[] => {
     }
   }
 
-  // Fisher-Yates shuffle using seeded RNG
   for (let i = positions.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [positions[i], positions[j]] = [positions[j], positions[i]];
@@ -179,7 +197,15 @@ const generateInitialCubes = (count: number, seed: number): CubeState[] => {
     });
   }
 
-  return cubes;
+  const goals: Goal[] = [];
+  for (let index = 0; index < targetCount; index++) {
+    const position = positions[(index + targetCount) % positions.length];
+    const color =
+      GOAL_COLORS[Math.floor(rng() * GOAL_COLORS.length)];
+    goals.push({ position, color });
+  }
+
+  return { cubes, goals };
 };
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -198,11 +224,15 @@ export class MovementManager {
   private worldToScreen:
     | ((vector: p5.Vector) => p5.Vector)
     | undefined = undefined;
+  private goals: Goal[] = [];
 
   constructor(private readonly p: p5) {
     this.worldToScreen = (p as any).worldToScreen?.bind(p);
     const { count, seed } = getInitialParams();
-    this.cubes = generateInitialCubes(count, seed);
+    const gridCells = getGridCells();
+    const level = generateLevel(gridCells, count, seed);
+    this.cubes = level.cubes;
+    this.goals = level.goals;
   }
 
   private getCubeWorldCenter(position: CubePosition) {
@@ -385,6 +415,7 @@ export class MovementManager {
   }
 
   public drawCubes() {
+    this.drawGoals();
     const activeCubeRender = this.getAnimatedCubeRender();
 
     this.cubes.forEach((cube) => {
@@ -397,6 +428,28 @@ export class MovementManager {
             };
       drawCube(this.p, render.position.x, render.position.y, render.rotation);
     });
+  }
+
+  private drawGoals() {
+    this.goals.forEach((goal) => {
+      drawFloor(this.p, goal.position.x, goal.position.y, goal.color);
+      this.drawGoalOverlay(goal);
+    });
+  }
+
+  private drawGoalOverlay(goal: Goal) {
+    const halfSpacing = GRID_SPACING / 2;
+    const radius = getGridRadius();
+    const cellCenterX =
+      -radius + halfSpacing + goal.position.x * GRID_SPACING;
+    const cellCenterY =
+      -radius + halfSpacing + goal.position.y * GRID_SPACING;
+
+    this.p.push();
+    this.p.noStroke();
+    this.p.fill(255, 120);
+    this.p.ellipse(cellCenterX, cellCenterY, GRID_SPACING * 0.3);
+    this.p.pop();
   }
 
   public handleMousePressed() {
