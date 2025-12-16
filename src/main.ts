@@ -14,7 +14,7 @@ import {
 import { quaternionSlerp } from "./quaternions";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
-const ANIMATION_DURATION_MS = 380;
+const ANIMATION_DURATION_MS = 220;
 const centerIndex = Math.floor(GRID_CELLS / 2);
 
 const directionOffsets: Record<Direction, [number, number]> = {
@@ -219,6 +219,10 @@ function drawGrid(p: p5) {
 
 function drawOverlay(p: p5, dragState: DragState, isAnimating: boolean) {
   p.push();
+  const rendererGL = (p as any)._renderer?.GL;
+  if (rendererGL) {
+    rendererGL.disable(rendererGL.DEPTH_TEST);
+  }
   p.resetMatrix();
   p.translate(-p.width / 2, -p.height / 2);
 
@@ -244,5 +248,9 @@ function drawOverlay(p: p5, dragState: DragState, isAnimating: boolean) {
     ? "Rolling..."
     : "Drag the cube along any axis to roll it.";
   p.text(statusText, 20, 20);
+
+  if (rendererGL) {
+    rendererGL.enable(rendererGL.DEPTH_TEST);
+  }
   p.pop();
 }
