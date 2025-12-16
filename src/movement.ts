@@ -17,6 +17,7 @@ import {
   setGridCells,
 } from "./grid-config";
 import { quaternionSlerp, type Quaternion } from "./quaternions";
+import { playBlockedSound, playMoveSound } from "./sounds";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
 const ANIMATION_DURATION_MS = 220;
@@ -327,14 +328,21 @@ export class MovementManager {
       x: cube.position.x + offsetX,
       y: cube.position.y + offsetY,
     };
-    if (!this.isInsideGrid(targetPosition)) return false;
+    if (!this.isInsideGrid(targetPosition)) {
+      playBlockedSound();
+      return false;
+    }
     if (this.isCellOccupied(targetPosition, cube.id)) {
+      playBlockedSound();
       return false;
     }
 
     const targetOrientation =
       DIRECTIONAL_ORIENTATION_MAPS[direction][cube.orientation];
-    if (!targetOrientation) return false;
+    if (!targetOrientation) {
+      playBlockedSound();
+      return false;
+    }
 
     this.animationState = {
       cubeId: cube.id,
@@ -349,7 +357,7 @@ export class MovementManager {
     if (recordHistory) {
       this.moveHistory.push({ cubeId: cube.id, direction });
     }
-
+    playMoveSound();
     return true;
   }
 
