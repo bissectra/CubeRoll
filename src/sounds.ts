@@ -72,3 +72,9 @@ const playTone = (
 
 export const playMoveSound = () => playTone(520, 0.12, 0.18, "triangle");
 export const playBlockedSound = () => playTone(180, 0.2, 0.2, "sawtooth");
+
+export const playLevelCompleteSound = () => {
+  playTone(640, 0.12, 0.18, "sine");
+  setTimeout(() => playTone(780, 0.14, 0.15, "sine"), 120);
+  setTimeout(() => playTone(940, 0.18, 0.08, "triangle"), 260);
+};

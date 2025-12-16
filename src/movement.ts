@@ -20,6 +20,7 @@ import { quaternionSlerp, type Quaternion } from "./quaternions";
 import {
   playBlockedSound,
   playMoveSound,
+  playLevelCompleteSound,
   unlockAudioContext,
 } from "./sounds";
 import { sanitizeSeedValue, getTodaySeedValue } from "./params";
@@ -559,6 +560,7 @@ export class MovementManager {
       return;
     }
     const key = this.bestSolutionKey;
+    playLevelCompleteSound();
     const candidate: BestSolution = {
       completedAt: Date.now(),
       moveHistory: [...this.moveHistory],
