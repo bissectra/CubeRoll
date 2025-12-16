@@ -211,7 +211,7 @@ const generateLevel = (
 
   const goals: Goal[] = [];
   for (let index = 0; index < targetCount; index++) {
-    const position = positions[(index + targetCount) % positions.length];
+    const position = positions[index];
     const color =
       GOAL_COLORS[Math.floor(rng() * GOAL_COLORS.length)];
     goals.push({ position, color });
@@ -485,7 +485,8 @@ export class MovementManager {
 
     this.p.push();
     this.p.noStroke();
-    this.p.fill(255, 120);
+    // black semi-transparent fill
+    this.p.fill(0, 150);
     this.p.ellipse(cellCenterX, cellCenterY, GRID_SPACING * 0.3);
     this.p.pop();
   }
