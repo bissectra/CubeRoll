@@ -76,3 +76,38 @@ canvas {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.25);
 }
+
+@media (max-width: 600px) {
+  .control-panel {
+    flex-direction: column;
+    top: auto;
+    bottom: 16px;
+    right: 50%;
+    transform: translateX(50%);
+    background: transparent;
+    padding: 0;
+  }
+
+  .control-panel button,
+  .control-panel a {
+    letter-spacing: normal;
+    text-transform: none;
+    font-size: 0.9rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: transparent;
+    min-width: 140px;
+  }
+
+  .control-panel button:hover,
+  .control-panel a:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .control-panel button:disabled {
+    opacity: 0.4;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: transparent;
+  }
+}
