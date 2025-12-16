@@ -43,6 +43,8 @@ canvas {
   top: 12px;
   right: 12px;
   z-index: 15;
+  display: flex;
+  gap: 8px;
 }
 
 .control-panel button {

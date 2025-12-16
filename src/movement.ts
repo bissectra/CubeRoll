@@ -350,14 +350,32 @@ export class MovementManager {
     this.count = params.count;
     this.seedValue = params.seedValue;
     this.seed = params.seed;
+    this.loadLevelState();
+  }
+
+  private resetDragState() {
+    this.animationState = null;
+    this.dragTargetId = null;
+    this.dragState = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+    };
+  }
+
+  private loadLevelState(useStored = true) {
     this.storageKey = buildStorageKey(
       this.gridSize,
       this.count,
       this.seedValue
     );
-    const storedState = this.storageKey
-      ? loadPersistedState(this.storageKey)
+    this.bestSolutionKey = this.storageKey
+      ? buildBestSolutionKey(this.storageKey)
       : null;
+    const storedState =
+      useStored && this.storageKey ? loadPersistedState(this.storageKey) : null;
     if (storedState) {
       this.cubes = storedState.cubes;
       this.goals = storedState.goals;
@@ -368,10 +386,10 @@ export class MovementManager {
       this.goals = level.goals;
       this.moveHistory = [];
     }
-    if (this.storageKey) {
-      this.bestSolutionKey = buildBestSolutionKey(this.storageKey);
-      this.bestSolution = loadBestSolution(this.bestSolutionKey);
-    }
+    this.bestSolution = this.bestSolutionKey
+      ? loadBestSolution(this.bestSolutionKey)
+      : null;
+    this.resetDragState();
     this.persistState();
   }
 
@@ -502,26 +520,26 @@ export class MovementManager {
   }
 
   public resetLevel() {
-    if (this.animationState) {
-      this.animationState = null;
-    }
-    if (!this.storageKey) {
+    this.clearPersistedState();
+    this.loadLevelState(false);
+  }
+
+  public nextLevel() {
+    const maxCells = this.gridSize * this.gridSize;
+    if (this.count >= maxCells) {
       return;
     }
-    this.clearPersistedState();
-    const level = generateLevel(this.gridSize, this.count, this.seed);
-    this.cubes = level.cubes;
-    this.goals = level.goals;
-    this.moveHistory = [];
-    this.dragTargetId = null;
-    this.dragState = {
-      active: false,
-      startX: 0,
-      startY: 0,
-      currentX: 0,
-      currentY: 0,
-    };
-    this.persistState();
+    this.count = Math.min(maxCells, this.count + 1);
+    ensureUrlParams(this.gridSize, this.count, this.seedValue);
+    this.loadLevelState();
+  }
+
+  public hasBestSolution() {
+    return this.bestSolution !== null;
+  }
+
+  public canAdvanceLevel() {
+    return this.count < this.gridSize * this.gridSize;
   }
 
   private isInsideGrid(position: CubePosition) {
