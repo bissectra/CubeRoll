@@ -1,14 +1,19 @@
 import p5 from "p5";
 import {
   drawCube,
-  GRID_CELLS,
-  GRID_RADIUS,
-  GRID_SPACING,
   DIRECTIONAL_ORIENTATION_MAPS,
   ORIENTATION_QUATERNIONS,
   Direction,
   FaceOrientationKey,
 } from "./cube-factory";
+import {
+  GRID_SPACING,
+  getDefaultGridSize,
+  getGridCells,
+  getGridRadius,
+  getGridSizeOptions,
+  setGridCells,
+} from "./grid-config";
 import { quaternionSlerp, type Quaternion } from "./quaternions";
 
 const DRAG_DISTANCE_THRESHOLD = 18;
@@ -17,7 +22,76 @@ const CUBE_PICK_RADIUS = GRID_SPACING * 0.6;
 const FACE_ORIENTATION_KEYS = Object.keys(
   ORIENTATION_QUATERNIONS
 ) as FaceOrientationKey[];
-const INITIAL_CUBE_COUNT = 3;
+const DEFAULT_INITIAL_CUBE_COUNT = 1;
+const DEFAULT_SEED_VALUE = "default";
+
+const parseNumberParam = (value: string | null, fallback: number) => {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const hashSeedString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = Math.imul(31, hash) + value.charCodeAt(i);
+  }
+  return hash >>> 0;
+};
+
+const ensureUrlParams = (gridSize: number, countParam: number, seedValue: string) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  const currentParams = new URLSearchParams(url.search);
+
+  const orderedParams = new URLSearchParams();
+  orderedParams.set("m", String(gridSize));
+  orderedParams.set("n", String(countParam));
+  orderedParams.set("seed", seedValue);
+
+  currentParams.forEach((value, key) => {
+    if (["m", "n", "seed"].includes(key)) return;
+    orderedParams.set(key, value);
+  });
+
+  const newSearch = orderedParams.toString();
+  if (newSearch !== url.search.substring(1)) {
+    url.search = newSearch;
+    window.history.replaceState(window.history.state, "", url.toString());
+  }
+};
+
+const getInitialParams = () => {
+  const params =
+    typeof window === "undefined"
+      ? new URLSearchParams()
+      : new URLSearchParams(window.location.search);
+  const requestedGrid = parseNumberParam(
+    params.get("m"),
+    getDefaultGridSize()
+  );
+  const validGridSizes = getGridSizeOptions();
+  const safeGrid = validGridSizes.includes(requestedGrid)
+    ? requestedGrid
+    : getDefaultGridSize();
+  setGridCells(safeGrid);
+
+  const requestedCount = parseNumberParam(params.get("n"), DEFAULT_INITIAL_CUBE_COUNT);
+  const safeCount = Math.min(
+    getGridCells() * getGridCells(),
+    Math.max(0, requestedCount)
+  );
+  const requestedSeedValue = params.get("seed") ?? DEFAULT_SEED_VALUE;
+
+  ensureUrlParams(safeGrid, safeCount, requestedSeedValue);
+
+  return {
+    count: safeCount,
+    seed: hashSeedString(requestedSeedValue),
+  };
+};
 
 const directionOffsets: Record<Direction, [number, number]> = {
   north: [0, -1],
@@ -58,23 +132,41 @@ type AnimationState = {
   toOrientation: FaceOrientationKey;
 };
 
-const generateInitialCubes = (): CubeState[] => {
+const mulberry32 = (seed: number) => {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let z = t;
+    z = Math.imul(z ^ (z >>> 15), z | 1);
+    z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const generateInitialCubes = (count: number, seed: number): CubeState[] => {
   const cubes: CubeState[] = [];
   const usedPositions = new Set<string>();
   let attempts = 0;
+  const rng = mulberry32(seed);
+  const maxCount = getGridCells() * getGridCells();
+  const targetCount = Math.min(count, maxCount);
 
-  while (cubes.length < INITIAL_CUBE_COUNT && attempts < 200) {
+  if (targetCount <= 0) {
+    return [];
+  }
+
+  while (cubes.length < targetCount && attempts < 400) {
     attempts++;
     const position: CubePosition = {
-      x: Math.floor(Math.random() * GRID_CELLS),
-      y: Math.floor(Math.random() * GRID_CELLS),
+      x: Math.floor(rng() * getGridCells()),
+      y: Math.floor(rng() * getGridCells()),
     };
     const key = `${position.x},${position.y}`;
     if (usedPositions.has(key)) continue;
     usedPositions.add(key);
     const orientation =
       FACE_ORIENTATION_KEYS[
-        Math.floor(Math.random() * FACE_ORIENTATION_KEYS.length)
+        Math.floor(rng() * FACE_ORIENTATION_KEYS.length)
       ];
     cubes.push({
       id: cubes.length + 1,
@@ -105,15 +197,17 @@ export class MovementManager {
 
   constructor(private readonly p: p5) {
     this.worldToScreen = (p as any).worldToScreen?.bind(p);
-    this.cubes = generateInitialCubes();
+    const { count, seed } = getInitialParams();
+    this.cubes = generateInitialCubes(count, seed);
   }
 
   private getCubeWorldCenter(position: CubePosition) {
     const halfSize = GRID_SPACING / 2;
+    const gridRadius = getGridRadius();
     const cellCenterX =
-      -GRID_RADIUS + GRID_SPACING / 2 + position.x * GRID_SPACING;
+      -gridRadius + GRID_SPACING / 2 + position.x * GRID_SPACING;
     const cellCenterY =
-      -GRID_RADIUS + GRID_SPACING / 2 + position.y * GRID_SPACING;
+      -gridRadius + GRID_SPACING / 2 + position.y * GRID_SPACING;
     return { x: cellCenterX, y: cellCenterY, z: halfSize };
   }
 
@@ -156,11 +250,12 @@ export class MovementManager {
   }
 
   private isInsideGrid(position: CubePosition) {
+    const gridCells = getGridCells();
     return (
       position.x >= 0 &&
-      position.x < GRID_CELLS &&
+      position.x < gridCells &&
       position.y >= 0 &&
-      position.y < GRID_CELLS
+      position.y < gridCells
     );
   }
 
@@ -323,5 +418,4 @@ export class MovementManager {
   public isAnimating() {
     return this.animationState !== null;
   }
-
 }

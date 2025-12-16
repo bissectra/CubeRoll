@@ -1,9 +1,5 @@
 import p5 from "p5";
-import {
-  GRID_HALF_COUNT,
-  GRID_RADIUS,
-  GRID_SPACING,
-} from "./cube-factory";
+import { GRID_SPACING, getGridHalfCount, getGridRadius } from "./grid-config";
 import { DragState } from "./movement";
 
 export function drawGrid(p: p5) {
@@ -11,10 +7,13 @@ export function drawGrid(p: p5) {
   p.stroke(255, 255, 255, 120);
   p.noFill();
 
-  for (let i = -GRID_HALF_COUNT; i <= GRID_HALF_COUNT; i++) {
+  const halfCount = getGridHalfCount();
+  const radius = getGridRadius();
+
+  for (let i = -halfCount; i <= halfCount; i++) {
     const offset = i * GRID_SPACING;
-    p.line(offset, -GRID_RADIUS, 0, offset, GRID_RADIUS, 0);
-    p.line(-GRID_RADIUS, offset, 0, GRID_RADIUS, offset, 0);
+    p.line(offset, -radius, 0, offset, radius, 0);
+    p.line(-radius, offset, 0, radius, offset, 0);
   }
 }
 
